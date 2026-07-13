@@ -625,11 +625,17 @@
                     };
                     if (imgBase64) fields.img = { stringValue: imgBase64 };
 
-                    let url = "https://googleapis.com";
+                    let url = `${BASE_URL}/products`;
                     let method = "POST";
+                    
                     if (editId) {
-                        url = `https://googleapis.com/${editId}`;
+                        url = `${BASE_URL}/products/${editId}`;
                         method = "PATCH";
+                        // Если при редактировании картинку не меняли, сохраняем старую из памяти
+                        const currentProd = window.products.find(x => x.id === editId);
+                        if (!imgBase64 && currentProd && currentProd.img) {
+                            fields.img = { stringValue: currentProd.img };
+                        }
                     } else {
                         fields.createdAt = { integerValue: Date.now() };
                     }
@@ -644,11 +650,12 @@
                         window.toggleModal('adminModal', false);
                         await loadAllData();
                         alert('Zapisano pomyślnie w chmurze!');
-                    } else { alert('Błąd serwera Firestore!'); }
+                    } else { alert('Błąd serwera Firestore REST!'); }
                 } catch (e) { alert('Błąd połączenia sieciowego!'); }
             };
 
-            if (fileInput.files && fileInput.files.length > 0) {
+            // ИСПРАВЛЕНО: Проверяем, прикрепил ли пользователь файл, чтобы FileReader не падал
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
@@ -663,24 +670,21 @@
                     };
                     img.src = e.target.result;
                 };
-                reader.readAsDataURL(fileInput.files);
-            } else { sendToBackend(null); }
+                reader.readAsDataURL(fileInput.files[0]);
+            } else { 
+                // Файла нет — просто шлем текстовые поля без конвертации пустоты
+                sendToBackend(null); 
+            }
         };
-        // USUWANIE PRODUKTU Z BACKENDU W WARSZAWIE
-        window.deleteProduct = async function(id) {
-            if (!confirm("Czy na pewno chcesz usunąć ten produkt?")) return;
-            try {
-                const res = await fetch(`https://googleapis.com{id}`, { method: "DELETE" });
-                if (res.ok) { await loadAllData(); alert('Produkt usunięty!'); }
-            } catch (e) { console.error(e); }
-        };
+
 
         // AKTUALIZACJA SOCIAL MEDIA I OPISU BRANDU NA STAŁE LINKI REST API
         window.saveSocialLinks = async function() {
             try {
                 const tiktok = document.getElementById('settingTikTok').value;
                 const instagram = document.getElementById('settingInstagram').value;
-                await fetch(`${BASE_URL}/config/socials`, {
+                // ИСПРАВЛЕНО: updateMask заставляет базу принудительно создать пустой документ, решая ошибку 404
+                await fetch(`${BASE_URL}/config/socials?updateMask.fieldPaths=tiktok&updateMask.fieldPaths=instagram`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { tiktok: { stringValue: tiktok }, instagram: { stringValue: instagram } } })
@@ -694,7 +698,8 @@
             const txt = document.getElementById('aboutInputField').value;
             if (!txt.trim()) return;
             try {
-                await fetch(`${BASE_URL}/config/about`, {
+                // ИСПРАВЛЕНО: Автоматическое создание документа "about" при первом сохранении
+                await fetch(`${BASE_URL}/config/about?updateMask.fieldPaths=text`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { text: { stringValue: txt } } })
@@ -703,6 +708,7 @@
                 window.toggleModal('aboutModal', false); alert('Opis marki zapisany!');
             } catch (e) { console.error(e); }
         };
+
 
         // KOLOROWE OKNO WYBORU ZAKUPU (ALLEGRO, VINTED, WHATSAPP)
         window.openBuyModal = function(id) {
