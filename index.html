@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vector Scooter Parts</title>
     
-    <!-- Logo na karcie przeglądarki (Favicon) -->
-    <link rel="icon" type="image/png" href="logo.png">
+    <!-- Logo na karcie przeglądarki (Favicon) z wymuszeniem odświeżenia cache -->
+    <link rel="icon" type="image/png" href="logo.png?v=1">
+
+    <!-- Ładowanie Firebase jako standardowe globalne skrypty (Brak błędów CORS na GitHub Pages) -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 
     <style>
         /* Ścisły czarno-biały minimalizm */
@@ -62,7 +66,7 @@
             z-index: 100;
         }
 
-        /* Nazwa marki wyrafinowaną, cienką czcionką */
+        /* Nazwa marki cienką czcionką */
         .logo {
             font-size: 24px;
             font-weight: 200;
@@ -300,6 +304,23 @@
             white-space: pre-wrap;
         }
 
+        /* Specjalne, kolorowe przyciski dla okna wyboru zakupu */
+        .btn-allegro { background: #ff5a00; color: #ffffff; border: 1px solid #ff5a00; font-weight: 700; }
+        .btn-vinted { background: #09b1ba; color: #ffffff; border: 1px solid #09b1ba; font-weight: 700; }
+        .btn-whatsapp { background: #25d366; color: #ffffff; border: 1px solid #25d366; font-weight: 700; }
+        
+        .purchase-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .purchase-options-list .btn {
+            width: 100%;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -424,6 +445,18 @@
         </div>
     </div>
 
+    <!-- MODAL: WYBÓR ZAKUPU (KUP) -->
+    <div id="buyModal" class="modal">
+        <div class="modal-content" style="width: 380px;">
+            <button class="close-btn" onclick="toggleModal('buyModal', false)">&times;</button>
+            <h3 style="margin-bottom: 8px;">Wybierz opcję zakupu</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="buyModalProductName">Nazwa produktu</p>
+            <div class="purchase-options-list" id="purchaseButtonsContainer">
+                <!-- Przyciski Allegro, Vinted, WhatsApp generowane dynamicznie -->
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: EDYCJA O NAS -->
     <div id="aboutModal" class="modal">
         <div class="modal-content" style="width: 500px;">
@@ -462,7 +495,179 @@
             <div class="form-group"><label>Zdjęcie produktu (Plik)</label><input type="file" id="prodFile" accept="image/*"></div>
             <div class="form-group"><label>Krótki opis</label><textarea id="prodDesc" rows="2" placeholder="Opis..."></textarea></div>
             <div class="form-group"><label>Specyfikacja</label><input type="text" id="prodSpecs" placeholder="np. HIC / SCS, 670mm"></div>
-            <div class="form-group"><label>Link do zakupu</label><input type="text" id="prodLink" placeholder="np. https://t.me"></div>
+            
+            <!-- Trzy osobne linki zakupu dla integracji z platformami -->
+            <div class="form-group"><label>Link Allegro (Opcjonalnie)</label><input type="text" id="prodLinkAllegro" placeholder="https://allegro.pl... "></div>
+            <div class="form-group"><label>Link Vinted (Opcjonalnie)</label><input type="text" id="prodLinkVinted" placeholder="https://vinted.pl... "></div>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 20px;
+            width: 440px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .footer-admin-link {
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            text-decoration: none;
+        }
+
+        .footer-admin-link:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 992px) {
+            .search-filter-panel { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Vector Scooter Parts</div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <button id="themeToggleBtn" class="btn btn-secondary" style="padding: 8px 14px; font-size: 14px; font-weight: bold;" onclick="toggleTheme()">☼</button>
+            <a href="#" id="topLinkTikTok" target="_blank" class="social-link">TikTok</a>
+            <a href="#" id="topLinkInstagram" target="_blank" class="social-link">Instagram</a>
+            <a href="https://wa.me" target="_blank" class="btn support-btn" style="padding: 8px 14px; font-size: 13px;">WhatsApp</a>
+            <button id="adminPanelBtn" class="btn btn-primary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAddModal()">+ Dodaj produkt</button>
+            <button id="adminAboutBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAboutModal()">Edytuj O nas</button>
+            <button id="adminSocialBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="toggleModal('socialModal', true)">Ustawienia Social Media</button>
+            <button id="adminLogoutBtn" class="btn btn-secondary" style="display: none; background: #2a1515; border-color: #4a2222; color: #ff9999; padding: 8px 14px; font-size: 13px;" onclick="logoutAdmin()">Wyloguj</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs-nav">
+            <button id="btnTabCatalog" class="tab-btn active" onclick="switchTab('catalog')">Katalog części</button>
+            <button id="btnTabAbout" class="tab-btn" onclick="switchTab('about')">O nas</button>
+        </div>
+
+        <div id="tabCatalogContent" class="tab-content active">
+            <div class="search-filter-panel">
+                <input type="text" id="searchBar" placeholder="Szukaj części..." oninput="filterCatalog()">
+                <select id="filterType" onchange="filterCatalog()">
+                    <option value="all">Typ: Wszystkie</option>
+                    <option value="Kierownica">Kierownice</option><option value="Deck">Decki</option><option value="Koła">Koła</option><option value="Widelec">Widelce</option><option value="Zacisk">Zaciski</option><option value="Inne">Inne</option>
+                </select>
+                <select id="filterColor" onchange="filterCatalog()">
+                    <option value="all">Kolor: Wszystkie</option>
+                    <option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option>
+                </select>
+                <select id="sortPrice" onchange="filterCatalog()">
+                    <option value="default">Cena: Domyślnie</option>
+                    <option value="low">Od najtańszych</option><option value="high">Od najdroższych</option>
+                </select>
+            </div>
+            <div id="catalog" class="catalog"></div>
+        </div>
+
+        <div id="tabAboutContent" class="tab-content">
+            <div id="aboutViewText" class="about-container">Ładowanie opisu marki...</div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content" style="width: 350px;">
+            <button class="close-btn" onclick="toggleModal('loginModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Panel Logowania</h3>
+            <div class="form-group">
+                <label>Kod administratora</label>
+                <input type="password" id="authCodeField" placeholder="Wpisz kod dostępu...">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="submitAuth()">Zaloguj się</button>
+        </div>
+    </div>
+
+    <div id="buyModal" class="modal">
+        <div class="modal-content" style="width: 380px;">
+            <button class="close-btn" onclick="toggleModal('buyModal', false)">&times;</button>
+            <h3 style="margin-bottom: 8px;">Wybierz opcję zakupu</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="buyModalProductName">Nazwa produktu</p>
+            <div class="purchase-options-list" id="purchaseButtonsContainer"></div>
+        </div>
+    </div>
+    <div id="aboutModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <button class="close-btn" onclick="toggleModal('aboutModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Edytuj sekcję O nas</h3>
+            <div class="form-group">
+                <label>Treść strony (obsługuje akapity)</label>
+                <textarea id="aboutInputField" rows="10" placeholder="Wpisz historię i opis swojej marki..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveAboutText()">Zapisz tekst</button>
+        </div>
+    </div>
+
+    <div id="socialModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <button class="close-btn" onclick="toggleModal('socialModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Ustawienia Social Media</h3>
+            <div class="form-group"><label>TikTok URL</label><input type="text" id="settingTikTok" placeholder="https://tiktok.com@..."></div>
+            <div class="form-group"><label>Instagram URL</label><input type="text" id="settingInstagram" placeholder="https://instagram.com..."></div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveSocialLinks()">Zapisz linki</button>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleModal('adminModal', false)">&times;</button>
+            <h3 id="modalFormTitle" style="margin-bottom: 15px;">Dodaj produkt</h3>
+            <input type="hidden" id="editProductId">
+            <div class="form-group"><label>Nazwa części</label><input type="text" id="prodTitle" placeholder="np. Kierownica Trianon"></div>
+            <div class="form-group"><label>Cena (PLN)</label><input type="number" id="prodPrice" placeholder="np. 350"></div>
+            <div class="form-group"><label>Waga (w gramach)</label><input type="number" id="prodWeight" placeholder="np. 1100"></div>
+            <div class="form-group"><label>Typ</label><select id="prodType"><option value="Kierownica">Kierownica</option><option value="Deck">Deck</option><option value="Koła">Koła</option><option value="Widelec">Widelec</option><option value="Zacisk">Zacisk</option><option value="Inne">Inne</option></select></div>
+            <div class="form-group"><label>Kolor</label><select id="prodColor"><option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option></select></div>
+            <div class="form-group"><label>Zdjęcie produktu (Plik)</label><input type="file" id="prodFile" accept="image/*"></div>
+            <div class="form-group"><label>Krótki opis</label><textarea id="prodDesc" rows="2" placeholder="Opis..."></textarea></div>
+            <div class="form-group"><label>Specyfikacja</label><input type="text" id="prodSpecs" placeholder="np. HIC / SCS, 670mm"></div>
+            
+            <div class="form-group"><label>Link Allegro (Opcjonalnie)</label><input type="text" id="prodLinkAllegro" placeholder="https://allegro.pl..."></div>
+            <div class="form-group"><label>Link Vinted (Opcjonalnie)</label><input type="text" id="prodLinkVinted" placeholder="https://vinted.pl..."></div>
+            <div class="form-group"><label>Link WhatsApp (Opcjonalnie)</label><input type="text" id="prodLinkWhatsApp" placeholder="https://wa.me..."></div>
+            
             <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveProductForm()">Zapisz zmiany</button>
         </div>
     </div>
@@ -470,14 +675,8 @@
     <footer>
         <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
     </footer>
-    <script type="module">
-        // Poprawione linki z dodaniem www. - rozwiązuje błąd CORS policy
-        import { initializeApp } from "https://gstatic.com";
-        import { 
-            getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, orderBy 
-        } from "https://gstatic.com";
-
-        // Konfiguracja projektu Firebase (Serwer Warszawa)
+    <script>
+        // Konfiguracja projektu Firebase (Serwer Warszawa europe-central2)
         const firebaseConfig = {
             apiKey: "AIzaSyDyjw5itjfrK5Pm5ZtfL2NtoN2pcBgYwrU",
             authDomain: "://firebaseapp.com",
@@ -488,16 +687,17 @@
             measurementId: "G-8BT3ZK0FEJ"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // Bezpieczna inicjalizacja przez skrypty globalne (całkowicie eliminuje błędy CORS)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // Stan aplikacji z pełną widocznością globalną
+        // Globalne zmienne aplikacji widoczne dla wszystkich elementów HTML
         window.products = [];
         window.socialLinks = { tiktok: "#", instagram: "#" };
         window.aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
         window.isAdminActive = false;
 
-        // Przypisanie funkcji do okna głównego (window) naprawia błąd "ReferenceError ... is not defined"
+        // Metody sterowania interfejsem graficznym
         window.toggleTheme = function() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
@@ -551,7 +751,7 @@
         window.openAddModal = function() {
             document.getElementById('editProductId').value = "";
             document.getElementById('modalFormTitle').innerText = "Dodaj produkt";
-            ['prodTitle','prodPrice','prodWeight','prodDesc','prodSpecs','prodLink','prodFile'].forEach(id => {
+            ['prodTitle','prodPrice','prodWeight','prodDesc','prodSpecs','prodLinkAllegro','prodLinkVinted','prodLinkWhatsApp','prodFile'].forEach(id => {
                 document.getElementById(id).value = "";
             });
             window.toggleModal('adminModal', true);
@@ -570,12 +770,15 @@
             document.getElementById('prodColor').value = p.color;
             document.getElementById('prodDesc').value = p.desc;
             document.getElementById('prodSpecs').value = p.specs;
-            document.getElementById('prodLink').value = p.link;
+            
+            document.getElementById('prodLinkAllegro').value = p.linkAllegro || "";
+            document.getElementById('prodLinkVinted').value = p.linkVinted || "";
+            document.getElementById('prodLinkWhatsApp').value = p.linkWhatsApp || "";
             document.getElementById('prodFile').value = "";
 
             window.toggleModal('adminModal', true);
         };
-        // GLOBALNA FUNKCJA ZAPISU I EDYCJI ZDJĘĆ / PRODUKTÓW W FIREBASE
+        // ASYNCHRONICZNY ZAPIS PRODUKTU DO CHMURY FIREBASE FIRESTORE
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -585,35 +788,39 @@
             const color = document.getElementById('prodColor').value;
             const desc = document.getElementById('prodDesc').value;
             const specs = document.getElementById('prodSpecs').value;
-            const link = document.getElementById('prodLink').value;
+            const linkAllegro = document.getElementById('prodLinkAllegro').value;
+            const linkVinted = document.getElementById('prodLinkVinted').value;
+            const linkWhatsApp = document.getElementById('prodLinkWhatsApp').value;
             const fileInput = document.getElementById('prodFile');
 
-            if (!title || isNaN(price) || !desc || !specs || !link) {
+            if (!title || isNaN(price) || !desc || !specs) {
                 alert('Proszę wypełnić wymagane pola formularza!');
                 return;
             }
 
             const sendToFirestore = async (compressedImgData) => {
                 try {
+                    const dataObj = { 
+                        title, price, weight, type, color, desc, specs,
+                        linkAllegro, linkVinted, linkWhatsApp 
+                    };
+
                     if (editId) {
-                        const docRef = doc(db, "products", editId);
-                        const updateData = { title, price, weight, type, color, desc, specs, link };
-                        if (compressedImgData) updateData.img = compressedImgData;
-                        await updateDoc(docRef, updateData);
+                        const docRef = db.collection("products").doc(editId);
+                        if (compressedImgData) dataObj.img = compressedImgData;
+                        await docRef.update(dataObj);
                     } else {
                         if (!compressedImgData) {
                             alert('Proszę wybrać zdjęcie dla nowego produktu!');
                             return;
                         }
-                        await addDoc(collection(db, "products"), {
-                            title, price, weight, type, color, desc, specs, link,
-                            img: compressedImgData,
-                            createdAt: Date.now()
-                        });
+                        dataObj.img = compressedImgData;
+                        dataObj.createdAt = Date.now();
+                        await db.collection("products").add(dataObj);
                     }
                     window.toggleModal('adminModal', false);
                     await loadAllData();
-                    alert('Zapisano pomyślnie w chmurze Firebase!');
+                    alert('Zapisano pomyślnie w chmurze dla Twojego brandu!');
                 } catch (error) {
                     console.error("Błąd zapisu w Firestore: ", error);
                     alert('Błąd połączenia z bazą danych online!');
@@ -650,11 +857,11 @@
             }
         };
 
-        // GLOBALNA FUNKCJA USUWANIA Z FIREBASE
+        // USUWANIE PRODUKTU Z FIREBASE
         window.deleteProduct = async function(id) {
             if (confirm("Czy na pewno chcesz usunąć ten produkt z bazy danych online?")) {
                 try {
-                    await deleteDoc(doc(db, "products", id));
+                    await db.collection("products").doc(id).delete();
                     await loadAllData();
                     alert('Produkt został trwale usunięty!');
                 } catch (error) {
@@ -662,34 +869,71 @@
                 }
             }
         };
-
+        // ZAPIS CONFIGU SOCIAL MEDIA
         window.saveSocialLinks = async function() {
             try {
                 window.socialLinks.tiktok = document.getElementById('settingTikTok').value;
                 window.socialLinks.instagram = document.getElementById('settingInstagram').value;
-                await setDoc(doc(db, "config", "socials"), window.socialLinks);
+                await db.collection("config").doc("socials").set(window.socialLinks);
                 applySocialLinks();
-                window.toggleModal('socialSocialModal', false);
+                window.toggleModal('socialModal', false);
                 alert('Linki social media zostały zaktualizowane w Firebase!');
             } catch (error) {
                 console.error("Błąd zapisu configu: ", error);
             }
         };
 
+        // ZAPIS TEKSTU O NAS
         window.saveAboutText = async function() {
             const newText = document.getElementById('aboutInputField').value;
             if (!newText.trim()) return;
             try {
-                await setDoc(doc(db, "config", "about"), { text: newText });
+                await db.collection("config").doc("about").set({ text: newText });
                 window.aboutText = newText;
                 document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.toggleModal('aboutModal', false);
-                alert('Opis marki został pomyślnie zaktualizowany w chmurze!');
+                alert('Opis marki został zaktualizowany w chmurze!');
             } catch (error) {
-                console.error("Błąd zapisu opisu marki: ", error);
+                console.error("Błąd zapisu opisanego tekstu: ", error);
             }
         };
 
+        // DYNAMICZNE GENEROWANIE I OTWIERANIE MODALA KUP
+        window.openBuyModal = function(id) {
+            const p = window.products.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('buyModalProductName').innerText = p.title;
+            const container = document.getElementById('purchaseButtonsContainer');
+            container.innerHTML = '';
+            let hasAnyLink = false;
+
+            if (p.linkAllegro && p.linkAllegro.trim() !== "") {
+                const a = document.createElement('a');
+                a.href = p.linkAllegro; a.target = "_blank"; a.className = "btn btn-allegro";
+                a.innerText = "Kup przez Allegro"; container.appendChild(a);
+                hasAnyLink = true;
+            }
+            if (p.linkVinted && p.linkVinted.trim() !== "") {
+                const a = document.createElement('a');
+                a.href = p.linkVinted; a.target = "_blank"; a.className = "btn btn-vinted";
+                a.innerText = "Kup przez Vinted"; container.appendChild(a);
+                hasAnyLink = true;
+            }
+            if (p.linkWhatsApp && p.linkWhatsApp.trim() !== "") {
+                const a = document.createElement('a');
+                a.href = p.linkWhatsApp; a.target = "_blank"; a.className = "btn btn-whatsapp";
+                a.innerText = "Kup przez WhatsApp"; container.appendChild(a);
+                hasAnyLink = true;
+            }
+
+            if (!hasAnyLink) {
+                container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:15px 0;">Brak dostępnych opcji zakupu dla tego produktu. Skontaktuj się ze wsparciem.</div>';
+            }
+            window.toggleModal('buyModal', true);
+        };
+
+        // FILTROWANIE I SORTOWANIE KATALOGU NA ŻYWO
         window.filterCatalog = function() {
             const q = document.getElementById('searchBar').value.toLowerCase();
             const t = document.getElementById('filterType').value;
@@ -715,6 +959,7 @@
             document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
 
+        // GENEROWANIE KART ELEMENTÓW NA STRONIE
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog');
             box.innerHTML = '';
@@ -727,31 +972,34 @@
                 c.className = 'product-card';
                 c.style.animationDelay = `${i * 0.03}s`;
                 const adm = window.isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
+                
                 c.innerHTML = `<div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
                     <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight || 0}g</div>
-                    <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><a href="${p.link}" target="_blank" class="btn btn-primary" style="padding:8px 20px; font-weight:600; letter-spacing:0.5px;">Kup</a></div>${adm}</div>`;
+                    <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><button class="btn btn-primary" style="padding:8px 20px; font-weight:600; letter-spacing:0.5px;" onclick="openBuyModal('${p.id}')">Kup</button></div>${adm}</div>`;
                 box.appendChild(c);
             });
-        }
+        };
 
+        // INTEGRACYJNE POBIERANIE WSZYSTKICH DANYCH Z WARSZAWSKIEGO SERWERA FIRESTORE
         async function loadAllData() {
             try {
-                const querySnapshot = await getDocs(query(collection(db, "products")));
+                const querySnapshot = await db.collection("products").orderBy("createdAt", "desc").get();
                 window.products = [];
-                querySnapshot.forEach((doc) => { window.products.push({ id: doc.id, ...doc.data() }); });
-                window.products.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+                querySnapshot.forEach((doc) => {
+                    window.products.push({ id: doc.id, ...doc.data() });
+                });
 
-                const socialsDoc = await getDoc(doc(db, "config", "socials"));
-                if (socialsDoc.exists()) window.socialLinks = socialsDoc.data();
+                const socialsDoc = await db.collection("config").doc("socials").get();
+                if (socialsDoc.exists) window.socialLinks = socialsDoc.data();
 
-                const aboutDoc = await getDoc(doc(db, "config", "about"));
-                if (aboutDoc.exists()) window.aboutText = aboutDoc.data().text;
+                const aboutDoc = await db.collection("config").doc("about").get();
+                if (aboutDoc.exists) window.aboutText = aboutDoc.data().text;
 
                 applySocialLinks();
                 document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.filterCatalog();
             } catch (error) {
-                console.error("Błąd pobierania danych: ", error);
+                console.error("Błąd pierwszego ładowania: ", error);
                 window.filterCatalog();
             }
         }
