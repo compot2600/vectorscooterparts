@@ -5,12 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vector Scooter Parts</title>
     
-    <!-- Logo na karcie przeglądarki (Favicon) z wymuszeniem odświeżenia -->
-    <link rel="icon" type="image/png" href="logo.png?v=7">
-
-    <!-- Gwarantowany import bibliotek na samym początku — zapobiega awarii skryptów -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <!-- Logo na karcie przeglądarki (Favicon) -->
+    <link rel="icon" type="image/png" href="logo.png?v=8">
 
     <style>
         /* Ścisły czarno-biały minimalizm Twojego brandu */
@@ -303,7 +299,6 @@
             white-space: pre-wrap;
         }
 
-        /* Kolorystyka przycisków w oknie Kup (Allegro, Vinted, WhatsApp) */
         .btn-allegro { background: #ff5a00; color: #ffffff; border: 1px solid #ff5a00; font-weight: 700; }
         .btn-vinted { background: #09b1ba; color: #ffffff; border: 1px solid #09b1ba; font-weight: 700; }
         .btn-whatsapp { background: #25d366; color: #ffffff; border: 1px solid #25d366; font-weight: 700; }
@@ -506,37 +501,24 @@
         <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
     </footer>
     <script>
-        // Konfiguracja Twojego projektu w Warszawie (europe-central2) z pełną integracją skryptów globalnych compat
-        const firebaseConfig = {
-            apiKey: "AIzaSyDyjw5itjfrK5Pm5ZtfL2NtoN2pcBgYwrU",
-            authDomain: "://firebaseapp.com",
-            projectId: "vector-scooter-parts",
-            storageBucket: "vector-scooter-parts.firebasestorage.app",
-            messagingSenderId: "442780520253",
-            appId: "1:442780520253:web:f8028195ea240030713f54",
-            measurementId: "G-8BT3ZK0FEJ"
-        };
+        // Bezpośrednia komunikacja z serwerem w Warszawie przez wbudowane w przeglądarkę REST API (Blokada CORS niemożliwa)
+        const PROJECT_ID = "vector-scooter-parts";
+        const BASE_URL = `https://googleapis.com{PROJECT_ID}/databases/(default)/documents`;
 
-        // Inicjalizacja bazy przez globalne skrypty kompatybilności — eliminacja błędów "firebase is not defined" oraz CORS
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Deklaracja zmiennych stanowych w oknie głównym przeglądarki
         window.products = [];
         window.socialLinks = { tiktok: "#", instagram: "#" };
         window.aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
         window.isAdminActive = false;
 
-        // JAWNE PRZYPISANIE METOD DO WINDOW — GWARANCJA DZIAŁANIA ONCLICK NA GITHUB PAGES
+        // Metody sterowania interfejsem przypisane do window — gwarancja działania onclick na GitHub Pages
         window.toggleTheme = function() {
             const currentTheme = document.body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            if (newTheme === 'light') {
-                document.body.setAttribute('data-theme', 'light');
-                document.getElementById('themeToggleBtn').innerText = '☾';
-            } else {
+            if (currentTheme === 'light') {
                 document.body.removeAttribute('data-theme');
                 document.getElementById('themeToggleBtn').innerText = '☼';
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+                document.getElementById('themeToggleBtn').innerText = '☾';
             }
         };
 
@@ -552,8 +534,7 @@
         };
 
         window.submitAuth = function() {
-            const input = document.getElementById('authCodeField').value;
-            if (input === "47boys") {
+            if (document.getElementById('authCodeField').value === "47boys") {
                 window.isAdminActive = true;
                 document.getElementById('adminPanelBtn').style.display = 'inline-flex';
                 document.getElementById('adminAboutBtn').style.display = 'inline-flex';
@@ -600,7 +581,6 @@
             document.getElementById('prodColor').value = p.color;
             document.getElementById('prodDesc').value = p.desc;
             document.getElementById('prodSpecs').value = p.specs;
-            
             document.getElementById('prodLinkAllegro').value = p.linkAllegro || "";
             document.getElementById('prodLinkVinted').value = p.linkVinted || "";
             document.getElementById('prodLinkWhatsApp').value = p.linkWhatsApp || "";
@@ -608,7 +588,24 @@
 
             window.toggleModal('adminModal', true);
         };
-        // ASYNCHRONICZNY ZAPIS PRODUKTU DO CHMURY FIREBASE FIRESTORE
+        // POMOCNICZA FUNKCJA DO MAPOWANIA POLI FIRESTORE REST API
+        function mapFields(fields) {
+            return {
+                title: fields.title?.stringValue || "",
+                price: parseFloat(fields.price?.doubleValue || fields.price?.integerValue || 0),
+                weight: parseInt(fields.weight?.integerValue || 0),
+                type: fields.type?.stringValue || "Inne",
+                color: fields.color?.stringValue || "Czarny",
+                desc: fields.desc?.stringValue || "",
+                specs: fields.specs?.stringValue || "",
+                img: fields.img?.stringValue || "",
+                linkAllegro: fields.linkAllegro?.stringValue || "",
+                linkVinted: fields.linkVinted?.stringValue || "",
+                linkWhatsApp: fields.linkWhatsApp?.stringValue || ""
+            };
+        }
+
+        // ZAPIS I EDYCJA PRODUKTU PRZEZ REZOLUCJĘ FETCH (BEZ SŁOWA FIREBASE)
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -624,95 +621,122 @@
             const fileInput = document.getElementById('prodFile');
 
             if (!title || isNaN(price) || !desc || !specs) {
-                alert('Proszę wypełnić wymagane pola formularza!'); return;
+                alert('Proszę wypełnić wymagane pola!'); return;
             }
 
-            const sendToFirestore = async (compressedImgData) => {
+            const sendToBackend = async (imgBase64) => {
                 try {
-                    const dataObj = { 
-                        title, price, weight, type, color, desc, specs,
-                        linkAllegro, linkVinted, linkWhatsApp 
+                    const fields = {
+                        title: { stringValue: title },
+                        price: { doubleValue: price },
+                        weight: { integerValue: weight },
+                        type: { stringValue: type },
+                        color: { stringValue: color },
+                        desc: { stringValue: desc },
+                        specs: { stringValue: specs },
+                        linkAllegro: { stringValue: linkAllegro },
+                        linkVinted: { stringValue: linkVinted },
+                        linkWhatsApp: { stringValue: linkWhatsApp }
                     };
+                    if (imgBase64) fields.img = { stringValue: imgBase64 };
+
+                    let url = `${BASE_URL}/products`;
+                    let method = "POST";
                     if (editId) {
-                        if (compressedImgData) dataObj.img = compressedImgData;
-                        await db.collection("products").doc(editId).update(dataObj);
+                        url = `${BASE_URL}/products/${editId}`;
+                        method = "PATCH";
                     } else {
-                        if (!compressedImgData) { alert('Proszę wybrać zdjęcie!'); return; }
-                        dataObj.img = compressedImgData; dataObj.createdAt = Date.now();
-                        await db.collection("products").add(dataObj);
+                        fields.createdAt = { integerValue: Date.now() };
                     }
-                    window.toggleModal('adminModal', false); await loadAllData();
-                    alert('Zapisano pomyślnie w chmurze!');
-                } catch (error) { alert('Błąd połączenia z bazą online!'); }
+
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ fields })
+                    });
+
+                    if (res.ok) {
+                        window.toggleModal('adminModal', false);
+                        await loadAllData();
+                        alert('Zapisano pomyślnie w chmurze!');
+                    } else { alert('Błąd serwera Firestore REST!'); }
+                } catch (e) { alert('Błąd połączenia sieciowego!'); }
             };
 
             if (fileInput.files && fileInput.files.length > 0) {
                 const reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        let width = img.width, height = img.height;
-                        if (width > height && width > 800) { height *= 800 / width; width = 800; }
-                        else if (height > 800) { width *= 800 / height; height = 800; }
-                        canvas.width = width; canvas.height = height;
-                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                        sendToFirestore(canvas.toDataURL('image/jpeg', 0.7));
+                        let w = img.width, h = img.height;
+                        if (w > h && w > 800) { h *= 800 / w; w = 800; }
+                        else if (h > 800) { w *= 800 / h; h = 800; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        sendToBackend(canvas.toDataURL('image/jpeg', 0.7));
                     };
-                    img.src = event.target.result;
+                    img.src = e.target.result;
                 };
                 reader.readAsDataURL(fileInput.files);
-            } else { sendToFirestore(null); }
+            } else { sendToBackend(null); }
         };
 
+        // DYNAMICZNE USUWANIE Z SERWERA W WARSZAWIE
         window.deleteProduct = async function(id) {
-            if (confirm("Czy chcesz usunąć produkt z bazy danych online?")) {
-                try {
-                    await db.collection("products").doc(id).delete(); await loadAllData();
-                    alert('Produkt został usunięty!');
-                } catch (error) { console.error(error); }
-            }
+            if (!confirm("Czy na pewno chcesz usunąć ten produkt?")) return;
+            try {
+                const res = await fetch(`${BASE_URL}/products/${id}`, { method: "DELETE" });
+                if (res.ok) { await loadAllData(); alert('Produkt usunięty!'); }
+            } catch (e) { console.error(e); }
         };
-
+        // ZAPIS CONFIGU SOCIAL MEDIA i OPISU MARKI
         window.saveSocialLinks = async function() {
             try {
-                window.socialLinks.tiktok = document.getElementById('settingTikTok').value;
-                window.socialLinks.instagram = document.getElementById('settingInstagram').value;
-                await db.collection("config").doc("socials").set(window.socialLinks);
-                applySocialLinks(); window.toggleModal('socialModal', false);
-                alert('Linki social media zapisane!');
-            } catch (error) { console.error(error); }
+                const tiktok = document.getElementById('settingTikTok').value;
+                const instagram = document.getElementById('settingInstagram').value;
+                await fetch(`${BASE_URL}/config/socials`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fields: { tiktok: { stringValue: tiktok }, instagram: { stringValue: instagram } } })
+                });
+                window.socialLinks = { tiktok, instagram }; applySocialLinks();
+                window.toggleModal('socialModal', false); alert('Social Media zaktualizowane!');
+            } catch (e) { console.error(e); }
         };
 
         window.saveAboutText = async function() {
-            const newText = document.getElementById('aboutInputField').value;
-            if (!newText.trim()) return;
+            const txt = document.getElementById('aboutInputField').value;
+            if (!txt.trim()) return;
             try {
-                await db.collection("config").doc("about").set({ text: newText });
-                window.aboutText = newText; document.getElementById('aboutViewText').innerText = window.aboutText;
-                window.toggleModal('aboutModal', false); alert('Opis marki zaktualizowany!');
-            } catch (error) { console.error(error); }
+                await fetch(`${BASE_URL}/config/about`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fields: { text: { stringValue: txt } } })
+                });
+                window.aboutText = txt; document.getElementById('aboutViewText').innerText = txt;
+                window.toggleModal('aboutModal', false); alert('Opis marki zapisany!');
+            } catch (e) { console.error(e); }
         };
 
+        // KOLOROWE OKNO WYBORU ZAKUPU (ALLEGRO, VINTED, WHATSAPP)
         window.openBuyModal = function(id) {
             const p = window.products.find(x => x.id === id);
             if (!p) return;
             document.getElementById('buyModalProductName').innerText = p.title;
             const container = document.getElementById('purchaseButtonsContainer');
-            container.innerHTML = ''; let hasAnyLink = false;
+            container.innerHTML = ''; let any = false;
 
             if (p.linkAllegro && p.linkAllegro.trim() !== "") {
-                container.innerHTML += `<a href="${p.linkAllegro}" target="_blank" class="btn btn-allegro">Kup przez Allegro</a>`; hasAnyLink = true;
+                container.innerHTML += `<a href="${p.linkAllegro}" target="_blank" class="btn btn-allegro">Kup przez Allegro</a>`; any = true;
             }
             if (p.linkVinted && p.linkVinted.trim() !== "") {
-                container.innerHTML += `<a href="${p.linkVinted}" target="_blank" class="btn btn-vinted">Kup przez Vinted</a>`; hasAnyLink = true;
+                container.innerHTML += `<a href="${p.linkVinted}" target="_blank" class="btn btn-vinted">Kup przez Vinted</a>`; any = true;
             }
             if (p.linkWhatsApp && p.linkWhatsApp.trim() !== "") {
-                container.innerHTML += `<a href="${p.linkWhatsApp}" target="_blank" class="btn btn-whatsapp">Kup przez WhatsApp</a>`; hasAnyLink = true;
+                container.innerHTML += `<a href="${p.linkWhatsApp}" target="_blank" class="btn btn-whatsapp">Kup przez WhatsApp</a>`; any = true;
             }
-            if (!hasAnyLink) {
-                container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:15px 0;">Brak dostępnych opcji zakupu.</div>';
-            }
+            if (!any) container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);">Brak opcji zakupu.</div>';
             window.toggleModal('buyModal', true);
         };
 
@@ -738,29 +762,41 @@
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog'); box.innerHTML = '';
             if (list.length === 0) {
-                box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;font-weight:300;letter-spacing:1px;">Brak produktów w tej kategorii.</div>'; return;
+                box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;">Brak produktów w tej kategorii.</div>'; return;
             }
             list.forEach((p, i) => {
-                const c = document.createElement('div'); c.className = 'product-card'; c.style.animationDelay = `${i * 0.03}s`;
                 const adm = window.isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
-                c.innerHTML = `<div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
-                    <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight || 0}g</div>
-                    <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><button class="btn btn-primary" style="padding:8px 20px; font-weight:600; letter-spacing:0.5px;" onclick="openBuyModal('${p.id}')">Kup</button></div>${adm}</div>`;
-                box.appendChild(c);
+                box.innerHTML += `<div class="product-card" style="animation-delay:${i*0.03}s">
+                    <div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
+                    <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight||0}g</div>
+                    <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><button class="btn btn-primary" style="padding:8px 20px; font-weight:600;" onclick="openBuyModal('${p.id}')">Kup</button></div>${adm}</div></div>`;
             });
         };
 
+        // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
         async function loadAllData() {
             try {
-                const querySnapshot = await db.collection("products").orderBy("createdAt", "desc").get();
-                window.products = []; querySnapshot.forEach((doc) => { window.products.push({ id: doc.id, ...doc.data() }); });
-                const socialsDoc = await db.collection("config").doc("socials").get();
-                if (socialsDoc.exists) window.socialLinks = socialsDoc.data();
-                const aboutDoc = await db.collection("config").doc("about").get();
-                if (aboutDoc.exists) window.aboutText = aboutDoc.data().text;
+                const pRes = await fetch(`${BASE_URL}/products`);
+                if (pRes.ok) {
+                    const pData = await pRes.json();
+                    window.products = (pData.documents || []).map(d => {
+                        const id = d.name.split('/').pop();
+                        return { id, ...mapFields(d.fields) };
+                    });
+                }
+                const sRes = await fetch(`${BASE_URL}/config/socials`);
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    window.socialLinks = { tiktok: sData.fields?.tiktok?.stringValue || "#", instagram: sData.fields?.instagram?.stringValue || "#" };
+                }
+                const aRes = await fetch(`${BASE_URL}/config/about`);
+                if (aRes.ok) {
+                    const aData = await aRes.json();
+                    window.aboutText = aData.fields?.text?.stringValue || window.aboutText;
+                }
                 applySocialLinks(); document.getElementById('aboutViewText').innerText = window.aboutText;
-                window.filterCatalog();
-            } catch (error) { window.filterCatalog(); }
+                document.getElementById('aboutInputField').value = window.aboutText; window.filterCatalog();
+            } catch (e) { window.filterCatalog(); }
         }
         loadAllData();
     </script>
