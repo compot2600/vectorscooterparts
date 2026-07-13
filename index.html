@@ -470,7 +470,6 @@
     <footer>
         <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
     </footer>
-    <!-- Konfiguracja type="module" pozwala korzystać z bezpiecznego kodu Firebase SDK bez instalacji programów -->
     <script type="module">
         import { initializeApp } from "https://gstatic.com";
         import { 
@@ -492,13 +491,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Globalne zmienne aplikacji
+        // Globalne zmienne aplikacji zarejestrowane w oknie przeglądarki
         window.products = [];
         window.socialLinks = { tiktok: "#", instagram: "#" };
         window.aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
         window.isAdminActive = false;
 
-        // Rejestracja funkcji w oknie przeglądarki (window), aby działały bezpośrednio z kodu HTML (onclick)
+        // JAWNA REJESTRACJA FUNKCJI W OKNIE GLOBALNYM (WINDOW) DLA DZIAŁANIA ONCLICK
         window.toggleTheme = function() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
@@ -522,7 +521,6 @@
             document.getElementById(id).classList.toggle('active', show);
         };
 
-        // Czytelny i niezawodny system logowania dla komputerów i GitHub Pages
         window.submitAuth = function() {
             const input = document.getElementById('authCodeField').value;
             if (input === "47boys") {
@@ -577,7 +575,7 @@
 
             window.toggleModal('adminModal', true);
         };
-        // FUNKCJA ZAPISU PRODUKTU DO FIREBASE FIRESTORE
+        // GLOBALNA FUNKCJA ZAPISU I EDYCJI W FIREBASE
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -615,10 +613,10 @@
                     }
                     window.toggleModal('adminModal', false);
                     await loadAllData();
-                    alert('Zapisano w bazie Firebase!');
+                    alert('Zapisano pomyślnie w chmurze Firebase!');
                 } catch (error) {
-                    console.error("Błąd zapisu: ", error);
-                    alert('Błąd podczas zapisywania danych w chmurze!');
+                    console.error("Błąd zapisu w Firestore: ", error);
+                    alert('Błąd połączenia z bazą danych online!');
                 }
             };
 
@@ -652,6 +650,7 @@
             }
         };
 
+        // GLOBALNA FUNKCJA USUWANIA Z FIREBASE
         window.deleteProduct = async function(id) {
             if (confirm("Czy na pewno chcesz usunąć ten produkt z bazy danych online?")) {
                 try {
@@ -659,11 +658,11 @@
                     await loadAllData();
                     alert('Produkt został trwale usunięty!');
                 } catch (error) {
-                    console.error("Błąd usuwania: ", error);
+                    console.error("Błąd podczas usuwania: ", error);
                 }
             }
         };
-
+        // GLOBALNA FUNKCJA ZAPISU URUCHAMIANA PRZEZ MODAL SOCIAL MEDIA
         window.saveSocialLinks = async function() {
             try {
                 window.socialLinks.tiktok = document.getElementById('settingTikTok').value;
@@ -671,12 +670,13 @@
                 await setDoc(doc(db, "config", "socials"), window.socialLinks);
                 applySocialLinks();
                 window.toggleModal('socialModal', false);
-                alert('Linki zostały zapisane w bazie Firebase!');
+                alert('Linki social media zostały zaktualizowane w Firebase!');
             } catch (error) {
-                console.error("Błąd configu: ", error);
+                console.error("Błąd zapisu configu: ", error);
             }
         };
 
+        // GLOBALNA FUNKCJA ZAPISU URUCHAMIANA PRZEZ MODAL O NAS
         window.saveAboutText = async function() {
             const newText = document.getElementById('aboutInputField').value;
             if (!newText.trim()) return;
@@ -685,12 +685,13 @@
                 window.aboutText = newText;
                 document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.toggleModal('aboutModal', false);
-                alert('Opis marki zaktualizowany w bazie Firebase!');
+                alert('Opis marki został pomyślnie zaktualizowany w chmurze!');
             } catch (error) {
-                console.error("Błąd O nas: ", error);
+                console.error("Błąd zapisu opisu marki: ", error);
             }
         };
 
+        // GLOBALNA FUNKCJA FILTROWANIA KATALOGU NA ŻYWO
         window.filterCatalog = function() {
             const q = document.getElementById('searchBar').value.toLowerCase();
             const t = document.getElementById('filterType').value;
@@ -716,6 +717,7 @@
             document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
 
+        // GLOBALNA FUNKCJA GENEROWANIA KART PRODUKTÓW
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog');
             box.innerHTML = '';
@@ -735,6 +737,7 @@
             });
         }
 
+        // FUNKCJA INTEGRACYJNA POBIERAJĄCA AKTUALNE DANE Z BAZY PO STRONIE KLIENTA
         async function loadAllData() {
             try {
                 const querySnapshot = await getDocs(query(collection(db, "products")));
@@ -752,7 +755,7 @@
                 document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.filterCatalog();
             } catch (error) {
-                console.error("Błąd ładowania: ", error);
+                console.error("Błąd pobierania danych: ", error);
                 window.filterCatalog();
             }
         }
