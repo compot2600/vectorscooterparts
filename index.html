@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Scooter Parts</title>
+    
+    <!-- Logo na karcie przeglądarki (Favicon) -->
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <style>
+        /* Ścisły czarno-biały minimalizm */
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-card: #121212;
+            --bg-input: #1a1a1a;
+            --accent: #ffffff;
+            --accent-muted: #333333;
+            --danger: #ff3333;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --border: #222222;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f5f5f7;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --accent: #000000;
+            --accent-muted: #cccccc;
+            --danger: #ef4444;
+            --text-main: #000000;
+            --text-muted: #666666;
+            --border: #e5e5e5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* Nazwa marki wyrafinowaną, cienką czcionką */
+        .logo {
+            font-size: 24px;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--text-main);
+            cursor: default;
+        }
+
+        body:not([data-theme="light"]) .logo:hover {
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px var(--accent);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: var(--bg-input);
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-main);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .social-link:hover {
+            border-color: var(--accent);
+        }
+
+        .support-btn {
+            background: var(--text-main);
+            color: var(--bg-main);
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 30px auto;
+            padding: 0 20px;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-filter-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 12px;
+            align-items: center;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+        }
+        
+        .catalog {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeInUp 0.4s forwards ease;
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .product-card:hover {
+            border-color: var(--accent);
+        }
+
+        .img-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            background: var(--bg-main);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badges {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid var(--border);
+        }
+
+        .badge-type { background: var(--bg-card); color: var(--text-main); }
+        .badge-color { background: var(--bg-input); color: var(--text-muted); }
+
+        .product-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .product-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+        .product-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; flex-grow: 1; }
+        .product-specs { font-size: 12px; background: var(--bg-input); padding: 10px; border-radius: 8px; margin-bottom: 15px; color: var(--text-main); border-left: 3px solid var(--accent); }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; }
+        .product-price { font-size: 20px; font-weight: 800; color: var(--text-main); }
+        .product-price::after { content: ' zł'; font-size: 14px; color: var(--text-muted); }
+
+        .about-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 15px;
+            white-space: pre-wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 20px;
+            width: 440px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .footer-admin-link {
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            text-decoration: none;
+        }
+
+        .footer-admin-link:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 992px) {
+            .search-filter-panel { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Vector Scooter Parts</div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <button id="themeToggleBtn" class="btn btn-secondary" style="padding: 8px 14px; font-size: 14px; font-weight: bold;" onclick="toggleTheme()">☼</button>
+            <a href="#" id="topLinkTikTok" target="_blank" class="social-link">TikTok</a>
+            <a href="#" id="topLinkInstagram" target="_blank" class="social-link">Instagram</a>
+            <a href="https://wa.me" target="_blank" class="btn support-btn" style="padding: 8px 14px; font-size: 13px;">WhatsApp</a>
+            <button id="adminPanelBtn" class="btn btn-primary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAddModal()">+ Dodaj produkt</button>
+            <button id="adminAboutBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAboutModal()">Edytuj O nas</button>
+            <button id="adminSocialBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="toggleModal('socialModal', true)">Ustawienia Social Media</button>
+            <button id="adminLogoutBtn" class="btn btn-secondary" style="display: none; background: #2a1515; border-color: #4a2222; color: #ff9999; padding: 8px 14px; font-size: 13px;" onclick="logoutAdmin()">Wyloguj</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs-nav">
+            <button id="btnTabCatalog" class="tab-btn active" onclick="switchTab('catalog')">Katalog części</button>
+            <button id="btnTabAbout" class="tab-btn" onclick="switchTab('about')">O nas</button>
+        </div>
+
+        <!-- ZAKŁADKA: KATALOG -->
+        <div id="tabCatalogContent" class="tab-content active">
+            <div class="search-filter-panel">
+                <input type="text" id="searchBar" placeholder="Szukaj części..." oninput="filterCatalog()">
+                <select id="filterType" onchange="filterCatalog()">
+                    <option value="all">Typ: Wszystkie</option>
+                    <option value="Kierownica">Kierownice</option><option value="Deck">Decki</option><option value="Koła">Koła</option><option value="Widelec">Widelce</option><option value="Zacisk">Zaciski</option><option value="Inne">Inne</option>
+                </select>
+                <select id="filterColor" onchange="filterCatalog()">
+                    <option value="all">Kolor: Wszystkie</option>
+                    <option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option>
+                </select>
+                <select id="sortPrice" onchange="filterCatalog()">
+                    <option value="default">Cena: Domyślnie</option>
+                    <option value="low">Od najtańszych</option><option value="high">Od najdroższych</option>
+                </select>
+            </div>
+            <div id="catalog" class="catalog"></div>
+        </div>
+
+        <!-- ZAKŁADKA: O NAS -->
+        <div id="tabAboutContent" class="tab-content">
+            <div id="aboutViewText" class="about-container">Ładowanie opisu marki...</div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content" style="width: 350px;">
+            <button class="close-btn" onclick="toggleModal('loginModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Panel Logowania</h3>
+            <div class="form-group">
+                <label>Kod administratora</label>
+                <input type="password" id="authCodeField" placeholder="Wpisz kod dostępu...">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="submitAuth()">Zaloguj się</button>
+        </div>
+    </div>
+
+    <!-- MODAL: EDYCJA O NAS -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <button class="close-btn" onclick="toggleModal('aboutModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Edytuj sekcję O nas</h3>
+            <div class="form-group">
+                <label>Treść strony (obsługuje akapity)</label>
+                <textarea id="aboutInputField" rows="10" placeholder="Wpisz historię i opis swojej marki..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveAboutText()">Zapisz tekst</button>
+        </div>
+    </div>
+
+    <!-- MODAL: SOCIAL MEDIA -->
+    <div id="socialModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <button class="close-btn" onclick="toggleModal('socialModal', false)">&times;</button>
+            <h3 style="margin-bottom: 15px;">Ustawienia Social Media</h3>
+            <div class="form-group"><label>TikTok URL</label><input type="text" id="settingTikTok" placeholder="https://tiktok.com@..."></div>
+            <div class="form-group"><label>Instagram URL</label><input type="text" id="settingInstagram" placeholder="https://instagram.com..."></div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveSocialLinks()">Zapisz linki</button>
+        </div>
+    </div>
+
+    <!-- MODAL: PRODUKT -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleModal('adminModal', false)">&times;</button>
+            <h3 id="modalFormTitle" style="margin-bottom: 15px;">Dodaj produkt</h3>
+            <input type="hidden" id="editProductId">
+            <div class="form-group"><label>Nazwa części</label><input type="text" id="prodTitle" placeholder="np. Kierownica Trianon"></div>
+            <div class="form-group"><label>Cena (PLN)</label><input type="number" id="prodPrice" placeholder="np. 350"></div>
+            <div class="form-group"><label>Waga (w gramach)</label><input type="number" id="prodWeight" placeholder="np. 1100"></div>
+            <div class="form-group"><label>Typ</label><select id="prodType"><option value="Kierownica">Kierownica</option><option value="Deck">Deck</option><option value="Koła">Koła</option><option value="Widelec">Widelec</option><option value="Zacisk">Zacisk</option><option value="Inne">Inne</option></select></div>
+            <div class="form-group"><label>Kolor</label><select id="prodColor"><option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option></select></div>
+            <div class="form-group"><label>Zdjęcie produktu (Plik)</label><input type="file" id="prodFile" accept="image/*"></div>
+            <div class="form-group"><label>Krótki opis</label><textarea id="prodDesc" rows="2" placeholder="Opis..."></textarea></div>
+            <div class="form-group"><label>Specyfikacja</label><input type="text" id="prodSpecs" placeholder="np. HIC / SCS, 670mm"></div>
+            <div class="form-group"><label>Link do zakupu</label><input type="text" id="prodLink" placeholder="np. https://t.me"></div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveProductForm()">Zapisz zmiany</button>
+        </div>
+    </div>
+
+    <footer>
+        <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
+    </footer>
+    <!-- Konfiguracja typu module pozwala na bezpieczne i bezpośrednie importowanie oficjalnego Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://gstatic.com";
+        import { 
+            getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, orderBy 
+        } from "https://gstatic.com";
+
+        // Twoja konfiguracja Web App wygenerowana w konsoli Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyjw5itjfrK5Pm5ZtfL2NtoN2pcBgYwrU",
+            authDomain: "://firebaseapp.com",
+            projectId: "vector-scooter-parts",
+            storageBucket: "vector-scooter-parts.firebasestorage.app",
+            messagingSenderId: "442780520253",
+            appId: "1:442780520253:web:f8028195ea240030713f54",
+            measurementId: "G-8BT3ZK0FEJ"
+        };
+
+        // Inicjalizacja Firebase i bazy danych Cloud Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Zmienne stanowe aplikacji
+        let products = [];
+        let socialLinks = { tiktok: "#", instagram: "#" };
+        let aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
+        let isAdminActive = false;
+
+        // Przypisanie funkcji do okna globalnego (window), aby były dostępne w atrybutach onclick w HTML
+        window.toggleTheme = function() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            if (newTheme === 'light') {
+                document.body.setAttribute('data-theme', 'light');
+                document.getElementById('themeToggleBtn').innerText = '☾';
+            } else {
+                document.body.removeAttribute('data-theme');
+                document.getElementById('themeToggleBtn').innerText = '☼';
+            }
+        };
+
+        window.switchTab = function(tab) {
+            document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
+            document.getElementById('btnTabAbout').classList.toggle('active', tab === 'about');
+            document.getElementById('tabCatalogContent').classList.toggle('active', tab === 'catalog');
+            document.getElementById('tabAboutContent').classList.toggle('active', tab === 'about');
+        };
+
+        window.toggleModal = function(id, show) {
+            document.getElementById(id).classList.toggle('active', show);
+        };
+
+        window.submitAuth = function() {
+            if (document.getElementById('authCodeField').value === "47boys") {
+                isAdminActive = true;
+                document.getElementById('adminPanelBtn').style.display = 'inline-flex';
+                document.getElementById('adminAboutBtn').style.display = 'inline-flex';
+                document.getElementById('adminSocialBtn').style.display = 'inline-flex';
+                document.getElementById('adminLogoutBtn').style.display = 'inline-flex';
+                window.toggleModal('loginModal', false);
+                renderProducts(products);
+                alert('Zalogowano pomyślnie!');
+            } else {
+                alert('Błędny kod dostępu!');
+            }
+            document.getElementById('authCodeField').value = '';
+        };
+
+        window.logoutAdmin = function() {
+            isAdminActive = false;
+            document.getElementById('adminPanelBtn').style.display = 'none';
+            document.getElementById('adminAboutBtn').style.display = 'none';
+            document.getElementById('adminSocialBtn').style.display = 'none';
+            document.getElementById('adminLogoutBtn').style.display = 'none';
+            renderProducts(products);
+            alert('Wylogowano z systemu.');
+        };
+
+        window.openAddModal = function() {
+            document.getElementById('editProductId').value = "";
+            document.getElementById('modalFormTitle').innerText = "Dodaj produkt";
+            ['prodTitle','prodPrice','prodWeight','prodDesc','prodSpecs','prodLink','prodFile'].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+            window.toggleModal('adminModal', true);
+        };
+
+        window.openEditModal = function(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('editProductId').value = p.id;
+            document.getElementById('modalFormTitle').innerText = "Edytuj produkt";
+            document.getElementById('prodTitle').value = p.title;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodWeight').value = p.weight || 0;
+            document.getElementById('prodType').value = p.type;
+            document.getElementById('prodColor').value = p.color;
+            document.getElementById('prodDesc').value = p.desc;
+            document.getElementById('prodSpecs').value = p.specs;
+            document.getElementById('prodLink').value = p.link;
+            document.getElementById('prodFile').value = "";
+
+            window.toggleModal('adminModal', true);
+        };
+        // FUNKCJA ZAPISU PRODUKTU DO FIREBASE FIRESTORE
+        window.saveProductForm = async function() {
+            const editId = document.getElementById('editProductId').value;
+            const title = document.getElementById('prodTitle').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const weight = parseInt(document.getElementById('prodWeight').value) || 0;
+            const type = document.getElementById('prodType').value;
+            const color = document.getElementById('prodColor').value;
+            const desc = document.getElementById('prodDesc').value;
+            const specs = document.getElementById('prodSpecs').value;
+            const link = document.getElementById('prodLink').value;
+            const fileInput = document.getElementById('prodFile');
+
+            if (!title || isNaN(price) || !desc || !specs || !link) {
+                alert('Proszę wypełnić wymagane pola formularza!');
+                return;
+            }
+
+            const sendToFirestore = async (compressedImgData) => {
+                try {
+                    if (editId) {
+                        const docRef = doc(db, "products", editId);
+                        const updateData = { title, price, weight, type, color, desc, specs, link };
+                        if (compressedImgData) updateData.img = compressedImgData;
+                        await updateDoc(docRef, updateData);
+                    } else {
+                        if (!compressedImgData) {
+                            alert('Proszę wybrać zdjęcie dla nowego produktu!');
+                            return;
+                        }
+                        await addDoc(collection(db, "products"), {
+                            title, price, weight, type, color, desc, specs, link,
+                            img: compressedImgData,
+                            createdAt: Date.now()
+                        });
+                    }
+                    window.toggleModal('adminModal', false);
+                    await loadAllData();
+                    alert('Zapisano w bazie Firebase!');
+                } catch (error) {
+                    console.error("Błąd zapisu: ", error);
+                    alert('Błąd podczas zapisywania danych w chmurze!');
+                }
+            };
+
+            if (fileInput.files && fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 800;
+
+                        if (width > height && width > MAX_SIZE) {
+                            height *= MAX_SIZE / width; width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height; height = MAX_SIZE;
+                        }
+
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        sendToFirestore(compressedBase64);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(fileInput.files);
+            } else {
+                sendToFirestore(null);
+            }
+        };
+
+        // USUWANIE PRODUKTU Z FIREBASE
+        window.deleteProduct = async function(id) {
+            if (confirm("Czy na pewno chcesz usunąć ten produkt z bazy danych online?")) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    await loadAllData();
+                    alert('Produkt został trwale usunięty!');
+                } catch (error) {
+                    console.error("Błąd usuwania: ", error);
+                }
+            }
+        };
+        // ZAPIS LINKÓW SOCIAL MEDIA W ODDZIELNYM DOKUMENCIE CONFIG
+        window.saveSocialLinks = async function() {
+            try {
+                socialLinks.tiktok = document.getElementById('settingTikTok').value;
+                socialLinks.instagram = document.getElementById('settingInstagram').value;
+                await setDoc(doc(db, "config", "socials"), socialLinks);
+                applySocialLinks();
+                window.toggleModal('socialModal', false);
+                alert('Linki zostały zapisane w bazie Firebase!');
+            } catch (error) {
+                console.error("Błąd configu: ", error);
+            }
+        };
+
+        // ZAPIS TEKSTU O NAS W ODDZIELNYM DOKUMENCIE CONFIG
+        window.saveAboutText = async function() {
+            const newText = document.getElementById('aboutInputField').value;
+            if (!newText.trim()) return;
+            try {
+                await setDoc(doc(db, "config", "about"), { text: newText });
+                aboutText = newText;
+                document.getElementById('aboutViewText').innerText = aboutText;
+                window.toggleModal('aboutModal', false);
+                alert('Opis marki zaktualizowany w bazie Firebase!');
+            } catch (error) {
+                console.error("Błąd O nas: ", error);
+            }
+        };
+
+        // WIZUALNY RENDER I FILTROWANIE KATALOGU NA ŻYWO
+        window.filterCatalog = function() {
+            const q = document.getElementById('searchBar').value.toLowerCase();
+            const t = document.getElementById('filterType').value;
+            const c = document.getElementById('filterColor').value;
+            const s = document.getElementById('sortPrice').value;
+
+            let f = products.filter(x => 
+                x.title.toLowerCase().includes(q) && 
+                (t === 'all' || x.type === t) && 
+                (c === 'all' || x.color === c)
+            );
+
+            if (s === 'low') f.sort((x, y) => x.price - y.price);
+            else if (s === 'high') f.sort((x, y) => y.price - x.price);
+
+            renderProducts(f);
+        };
+
+        function applySocialLinks() {
+            document.getElementById('topLinkTikTok').href = socialLinks.tiktok || "#";
+            document.getElementById('topLinkInstagram').href = socialLinks.instagram || "#";
+            document.getElementById('settingTikTok').value = socialLinks.tiktok || "";
+            document.getElementById('settingInstagram').value = socialLinks.instagram || "";
+        }
+
+        function renderProducts(list) {
+            const box = document.getElementById('catalog');
+            box.innerHTML = '';
+            if (list.length === 0) {
+                box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;font-weight:300;letter-spacing:1px;">Brak produktów w tej kategorii.</div>';
+                return;
+            }
+            list.forEach((p, i) => {
+                const c = document.createElement('div');
+                c.className = 'product-card';
+                c.style.animationDelay = `${i * 0.03}s`;
+                const adm = isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
+                c.innerHTML = `<div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
+                    <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight || 0}g</div>
+                    <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><a href="${p.link}" target="_blank" class="btn btn-primary" style="padding:8px 20px; font-weight:600; letter-spacing:0.5px;">Kup</a></div>${adm}</div>`;
+                box.appendChild(c);
+            });
+        }
+
+        // ASYNCHRONICZNE POBIERANIE WSZYSTKICH DANYCH Z CHMURY PO URUCHOMIENIU
+        async function loadAllData() {
+            try {
+                const querySnapshot = await getDocs(query(collection(db, "products")));
+                products = [];
+                querySnapshot.forEach((doc) => { products.push({ id: doc.id, ...doc.data() }); });
+                
+                // Сортируем локально по времени создания
+                products.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+                const socialsDoc = await getDoc(doc(db, "config", "socials"));
+                if (socialsDoc.exists()) socialLinks = socialsDoc.data();
+
+                const aboutDoc = await getDoc(doc(db, "config", "about"));
+                if (aboutDoc.exists()) aboutText = aboutDoc.data().text;
+
+                applySocialLinks();
+                document.getElementById('aboutViewText').innerText = aboutText;
+                window.filterCatalog();
+            } catch (error) {
+                console.error("Błąd ładowania: ", error);
+                window.filterCatalog();
+            }
+        }
+
+        loadAllData();
+    </script>
+</body>
+</html>
