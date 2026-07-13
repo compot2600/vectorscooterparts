@@ -591,22 +591,7 @@
                 // ПРОПИСАЛИ АДРЕС ПРЯМЫМ ТЕКСТОМ — Браузер гарантированно найдет твою базу в Варшаве
         
 
-        function mapFields(fields) {
-            return {
-                title: fields.title?.stringValue || "",
-                price: parseFloat(fields.price?.doubleValue || fields.price?.integerValue || 0),
-                weight: parseInt(fields.weight?.integerValue || 0),
-                type: fields.type?.stringValue || "Inne",
-                color: fields.color?.stringValue || "Czarny",
-                desc: fields.desc?.stringValue || "",
-                specs: fields.specs?.stringValue || "",
-                img: fields.img?.stringValue || "",
-                linkAllegro: fields.linkAllegro?.stringValue || "",
-                linkVinted: fields.linkVinted?.stringValue || "",
-                linkWhatsApp: fields.linkWhatsApp?.stringValue || ""
-            };
-        }
-
+        // ZAPIS I EDYCJA Elementu na nienaruszalne, bezpośrednie adresy URL
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -641,10 +626,10 @@
                     };
                     if (imgBase64) fields.img = { stringValue: imgBase64 };
 
-                    let url = `${BASE_URL}/products`;
+                    let url = "https://googleapis.com";
                     let method = "POST";
                     if (editId) {
-                        url = `${BASE_URL}/products/${editId}`;
+                        url = `https://googleapis.com/${editId}`;
                         method = "PATCH";
                     } else {
                         fields.createdAt = { integerValue: Date.now() };
@@ -664,7 +649,6 @@
                 } catch (e) { alert('Błąd połączenia sieciowego!'); }
             };
 
-            // ИСПРАВЛЕНО: Если картинка не выбрана, сайт больше не падает, а сохраняет текст!
             if (fileInput.files && fileInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -680,24 +664,24 @@
                     };
                     img.src = e.target.result;
                 };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else { 
-                sendToBackend(null); 
-            }
+                reader.readAsDataURL(fileInput.files);
+            } else { sendToBackend(null); }
         };
-
+        // USUWANIE PRODUKTU Z BACKENDU W WARSZAWIE
         window.deleteProduct = async function(id) {
             if (!confirm("Czy na pewno chcesz usunąć ten produkt?")) return;
             try {
-                const res = await fetch(`${BASE_URL}/products/${id}`, { method: "DELETE" });
+                const res = await fetch(`https://googleapis.com{id}`, { method: "DELETE" });
                 if (res.ok) { await loadAllData(); alert('Produkt usunięty!'); }
             } catch (e) { console.error(e); }
         };
+
+        // AKTUALIZACJA SOCIAL MEDIA I OPISU BRANDU NA STAŁE LINKI REST API
         window.saveSocialLinks = async function() {
             try {
                 const tiktok = document.getElementById('settingTikTok').value;
                 const instagram = document.getElementById('settingInstagram').value;
-                await fetch(`${BASE_URL}/config/socials`, {
+                await fetch("https://googleapis.com", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { tiktok: { stringValue: tiktok }, instagram: { stringValue: instagram } } })
@@ -711,7 +695,7 @@
             const txt = document.getElementById('aboutInputField').value;
             if (!txt.trim()) return;
             try {
-                await fetch(`${BASE_URL}/config/about`, {
+                await fetch("https://googleapis.com", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { text: { stringValue: txt } } })
@@ -721,6 +705,7 @@
             } catch (e) { console.error(e); }
         };
 
+        // KOLOROWE OKNO WYBORU ZAKUPU (ALLEGRO, VINTED, WHATSAPP)
         window.openBuyModal = function(id) {
             const p = window.products.find(x => x.id === id);
             if (!p) return;
@@ -737,7 +722,7 @@
             if (p.linkWhatsApp && p.linkWhatsApp.trim() !== "") {
                 container.innerHTML += `<a href="${p.linkWhatsApp}" target="_blank" class="btn btn-whatsapp">Kup przez WhatsApp</a>`; any = true;
             }
-            if (!any) container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:15px 0;">Brak opcji zakupu.</div>';
+            if (!any) container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);">Brak opcji zakupu.</div>';
             window.toggleModal('buyModal', true);
         };
 
@@ -759,7 +744,7 @@
             document.getElementById('settingTikTok').value = window.socialLinks.tiktok || "";
             document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
-
+        // GENEROWANIE KART ELEMENTÓW NA STRONIE W DYSKRETNYM MINIMALIZMIE
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog'); box.innerHTML = '';
             if (list.length === 0) {
@@ -777,7 +762,6 @@
         // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
         async function loadAllData() {
             try {
-                // Wstawiliśmy bezpośredni, pełny adres - błąd CORS i net::ERR zostają całkowicie zlikwidowane
                 const pRes = await fetch("https://googleapis.com");
                 if (pRes.ok) {
                     const pData = await pRes.json();
@@ -786,34 +770,21 @@
                         return { id, ...mapFields(d.fields) };
                     });
                 }
-                
-                // Pobieranie linków społecznościowych bezpośrednio z bazy online
                 const sRes = await fetch("https://googleapis.com");
                 if (sRes.ok) {
                     const sData = await sRes.json();
-                    window.socialLinks = { 
-                        tiktok: sData.fields?.tiktok?.stringValue || "#", 
-                        instagram: sData.fields?.instagram?.stringValue || "#" 
-                    };
+                    window.socialLinks = { tiktok: sData.fields?.tiktok?.stringValue || "#", instagram: sData.fields?.instagram?.stringValue || "#" };
                 }
-                
-                // Pobieranie opisu marki "O nas" bezpośrednio z bazy online
                 const aRes = await fetch("https://googleapis.com");
                 if (aRes.ok) {
                     const aData = await aRes.json();
                     window.aboutText = aData.fields?.text?.stringValue || window.aboutText;
                 }
-                
-                applySocialLinks(); 
-                document.getElementById('aboutViewText').innerText = window.aboutText;
-                document.getElementById('aboutInputField').value = window.aboutText; 
-                window.filterCatalog();
-            } catch (e) { 
-                window.filterCatalog(); 
-            }
+                applySocialLinks(); document.getElementById('aboutViewText').innerText = window.aboutText;
+                document.getElementById('aboutInputField').value = window.aboutText; window.filterCatalog();
+            } catch (e) { window.filterCatalog(); }
         }
         loadAllData();
     </script>
 </body>
 </html>
-
