@@ -766,6 +766,22 @@
                     <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><button class="btn btn-primary" style="padding:8px 20px; font-weight:600;" onclick="openBuyModal('${p.id}')">Kup</button></div>${adm}</div></div>`;
             });
         };
+                // ВОЗВРАЩАЕМ ФУНКЦИЮ РАСКЛАДКИ ПОЛЕЙ — Теперь mapFields гарантированно существует в памяти!
+        window.mapFields = function(fields) {
+            return {
+                title: fields.title?.stringValue || "",
+                price: parseFloat(fields.price?.doubleValue || fields.price?.integerValue || 0),
+                weight: parseInt(fields.weight?.integerValue || 0),
+                type: fields.type?.stringValue || "Inne",
+                color: fields.color?.stringValue || "Czarny",
+                desc: fields.desc?.stringValue || "",
+                specs: fields.specs?.stringValue || "",
+                img: fields.img?.stringValue || "",
+                linkAllegro: fields.linkAllegro?.stringValue || "",
+                linkVinted: fields.linkVinted?.stringValue || "",
+                linkWhatsApp: fields.linkWhatsApp?.stringValue || ""
+            };
+        };
 
         // ИСПРАВЛЕНО: Теперь каждый запрос изолирован. Ошибка 404 больше не ломает загрузку товаров!
         async function loadAllData() {
