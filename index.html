@@ -470,14 +470,14 @@
     <footer>
         <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
     </footer>
-    <!-- Konfiguracja typu module pozwala na bezpieczne i bezpośrednie importowanie oficjalnego Firebase SDK -->
+    <!-- Konfiguracja type="module" pozwala korzystać z bezpiecznego kodu Firebase SDK bez instalacji programów -->
     <script type="module">
         import { initializeApp } from "https://gstatic.com";
         import { 
             getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, orderBy 
         } from "https://gstatic.com";
 
-        // Twoja konfiguracja Web App wygenerowana w konsoli Firebase
+        // Twoja osobista konfiguracja z konsoli Firebase w Warszawie (europe-central2)
         const firebaseConfig = {
             apiKey: "AIzaSyDyjw5itjfrK5Pm5ZtfL2NtoN2pcBgYwrU",
             authDomain: "://firebaseapp.com",
@@ -488,21 +488,20 @@
             measurementId: "G-8BT3ZK0FEJ"
         };
 
-        // Inicjalizacja Firebase i bazy danych Cloud Firestore
+        // Inicjalizacja bazy danych online
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Zmienne stanowe aplikacji
-        let products = [];
-        let socialLinks = { tiktok: "#", instagram: "#" };
-        let aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
-        let isAdminActive = false;
+        // Globalne zmienne aplikacji
+        window.products = [];
+        window.socialLinks = { tiktok: "#", instagram: "#" };
+        window.aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
+        window.isAdminActive = false;
 
-        // Przypisanie funkcji do okna globalnego (window), aby były dostępne w atrybutach onclick w HTML
+        // Rejestracja funkcji w oknie przeglądarki (window), aby działały bezpośrednio z kodu HTML (onclick)
         window.toggleTheme = function() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
             if (newTheme === 'light') {
                 document.body.setAttribute('data-theme', 'light');
                 document.getElementById('themeToggleBtn').innerText = '☾';
@@ -523,15 +522,17 @@
             document.getElementById(id).classList.toggle('active', show);
         };
 
+        // Czytelny i niezawodny system logowania dla komputerów i GitHub Pages
         window.submitAuth = function() {
-            if (document.getElementById('authCodeField').value === "47boys") {
-                isAdminActive = true;
+            const input = document.getElementById('authCodeField').value;
+            if (input === "47boys") {
+                window.isAdminActive = true;
                 document.getElementById('adminPanelBtn').style.display = 'inline-flex';
                 document.getElementById('adminAboutBtn').style.display = 'inline-flex';
                 document.getElementById('adminSocialBtn').style.display = 'inline-flex';
                 document.getElementById('adminLogoutBtn').style.display = 'inline-flex';
                 window.toggleModal('loginModal', false);
-                renderProducts(products);
+                window.renderProducts(window.products);
                 alert('Zalogowano pomyślnie!');
             } else {
                 alert('Błędny kod dostępu!');
@@ -540,12 +541,12 @@
         };
 
         window.logoutAdmin = function() {
-            isAdminActive = false;
+            window.isAdminActive = false;
             document.getElementById('adminPanelBtn').style.display = 'none';
             document.getElementById('adminAboutBtn').style.display = 'none';
             document.getElementById('adminSocialBtn').style.display = 'none';
             document.getElementById('adminLogoutBtn').style.display = 'none';
-            renderProducts(products);
+            window.renderProducts(window.products);
             alert('Wylogowano z systemu.');
         };
 
@@ -559,7 +560,7 @@
         };
 
         window.openEditModal = function(id) {
-            const p = products.find(x => x.id === id);
+            const p = window.products.find(x => x.id === id);
             if (!p) return;
 
             document.getElementById('editProductId').value = p.id;
@@ -651,7 +652,6 @@
             }
         };
 
-        // USUWANIE PRODUKTU Z FIREBASE
         window.deleteProduct = async function(id) {
             if (confirm("Czy na pewno chcesz usunąć ten produkt z bazy danych online?")) {
                 try {
@@ -663,12 +663,12 @@
                 }
             }
         };
-        // ZAPIS LINKÓW SOCIAL MEDIA W ODDZIELNYM DOKUMENCIE CONFIG
+
         window.saveSocialLinks = async function() {
             try {
-                socialLinks.tiktok = document.getElementById('settingTikTok').value;
-                socialLinks.instagram = document.getElementById('settingInstagram').value;
-                await setDoc(doc(db, "config", "socials"), socialLinks);
+                window.socialLinks.tiktok = document.getElementById('settingTikTok').value;
+                window.socialLinks.instagram = document.getElementById('settingInstagram').value;
+                await setDoc(doc(db, "config", "socials"), window.socialLinks);
                 applySocialLinks();
                 window.toggleModal('socialModal', false);
                 alert('Linki zostały zapisane w bazie Firebase!');
@@ -677,14 +677,13 @@
             }
         };
 
-        // ZAPIS TEKSTU O NAS W ODDZIELNYM DOKUMENCIE CONFIG
         window.saveAboutText = async function() {
             const newText = document.getElementById('aboutInputField').value;
             if (!newText.trim()) return;
             try {
                 await setDoc(doc(db, "config", "about"), { text: newText });
-                aboutText = newText;
-                document.getElementById('aboutViewText').innerText = aboutText;
+                window.aboutText = newText;
+                document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.toggleModal('aboutModal', false);
                 alert('Opis marki zaktualizowany w bazie Firebase!');
             } catch (error) {
@@ -692,14 +691,13 @@
             }
         };
 
-        // WIZUALNY RENDER I FILTROWANIE KATALOGU NA ŻYWO
         window.filterCatalog = function() {
             const q = document.getElementById('searchBar').value.toLowerCase();
             const t = document.getElementById('filterType').value;
             const c = document.getElementById('filterColor').value;
             const s = document.getElementById('sortPrice').value;
 
-            let f = products.filter(x => 
+            let f = window.products.filter(x => 
                 x.title.toLowerCase().includes(q) && 
                 (t === 'all' || x.type === t) && 
                 (c === 'all' || x.color === c)
@@ -708,17 +706,17 @@
             if (s === 'low') f.sort((x, y) => x.price - y.price);
             else if (s === 'high') f.sort((x, y) => y.price - x.price);
 
-            renderProducts(f);
+            window.renderProducts(f);
         };
 
         function applySocialLinks() {
-            document.getElementById('topLinkTikTok').href = socialLinks.tiktok || "#";
-            document.getElementById('topLinkInstagram').href = socialLinks.instagram || "#";
-            document.getElementById('settingTikTok').value = socialLinks.tiktok || "";
-            document.getElementById('settingInstagram').value = socialLinks.instagram || "";
+            document.getElementById('topLinkTikTok').href = window.socialLinks.tiktok || "#";
+            document.getElementById('topLinkInstagram').href = window.socialLinks.instagram || "#";
+            document.getElementById('settingTikTok').value = window.socialLinks.tiktok || "";
+            document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
 
-        function renderProducts(list) {
+        window.renderProducts = function(list) {
             const box = document.getElementById('catalog');
             box.innerHTML = '';
             if (list.length === 0) {
@@ -729,7 +727,7 @@
                 const c = document.createElement('div');
                 c.className = 'product-card';
                 c.style.animationDelay = `${i * 0.03}s`;
-                const adm = isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
+                const adm = window.isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
                 c.innerHTML = `<div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
                     <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight || 0}g</div>
                     <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><a href="${p.link}" target="_blank" class="btn btn-primary" style="padding:8px 20px; font-weight:600; letter-spacing:0.5px;">Kup</a></div>${adm}</div>`;
@@ -737,24 +735,21 @@
             });
         }
 
-        // ASYNCHRONICZNE POBIERANIE WSZYSTKICH DANYCH Z CHMURY PO URUCHOMIENIU
         async function loadAllData() {
             try {
                 const querySnapshot = await getDocs(query(collection(db, "products")));
-                products = [];
-                querySnapshot.forEach((doc) => { products.push({ id: doc.id, ...doc.data() }); });
-                
-                // Сортируем локально по времени создания
-                products.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+                window.products = [];
+                querySnapshot.forEach((doc) => { window.products.push({ id: doc.id, ...doc.data() }); });
+                window.products.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
 
                 const socialsDoc = await getDoc(doc(db, "config", "socials"));
-                if (socialsDoc.exists()) socialLinks = socialsDoc.data();
+                if (socialsDoc.exists()) window.socialLinks = socialsDoc.data();
 
                 const aboutDoc = await getDoc(doc(db, "config", "about"));
-                if (aboutDoc.exists()) aboutText = aboutDoc.data().text;
+                if (aboutDoc.exists()) window.aboutText = aboutDoc.data().text;
 
                 applySocialLinks();
-                document.getElementById('aboutViewText').innerText = aboutText;
+                document.getElementById('aboutViewText').innerText = window.aboutText;
                 window.filterCatalog();
             } catch (error) {
                 console.error("Błąd ładowania: ", error);
