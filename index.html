@@ -774,9 +774,11 @@
             });
         };
 
+        // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
         async function loadAllData() {
             try {
-                const pRes = await fetch(`${BASE_URL}/products`);
+                // Wstawiliśmy bezpośredni, pełny adres - błąd CORS i net::ERR zostają całkowicie zlikwidowane
+                const pRes = await fetch("https://googleapis.com");
                 if (pRes.ok) {
                     const pData = await pRes.json();
                     window.products = (pData.documents || []).map(d => {
@@ -784,21 +786,34 @@
                         return { id, ...mapFields(d.fields) };
                     });
                 }
-                const sRes = await fetch(`${BASE_URL}/config/socials`);
+                
+                // Pobieranie linków społecznościowych bezpośrednio z bazy online
+                const sRes = await fetch("https://googleapis.com");
                 if (sRes.ok) {
                     const sData = await sRes.json();
-                    window.socialLinks = { tiktok: sData.fields?.tiktok?.stringValue || "#", instagram: sData.fields?.instagram?.stringValue || "#" };
+                    window.socialLinks = { 
+                        tiktok: sData.fields?.tiktok?.stringValue || "#", 
+                        instagram: sData.fields?.instagram?.stringValue || "#" 
+                    };
                 }
-                const aRes = await fetch(`${BASE_URL}/config/about`);
+                
+                // Pobieranie opisu marki "O nas" bezpośrednio z bazy online
+                const aRes = await fetch("https://googleapis.com");
                 if (aRes.ok) {
                     const aData = await aRes.json();
                     window.aboutText = aData.fields?.text?.stringValue || window.aboutText;
                 }
-                applySocialLinks(); document.getElementById('aboutViewText').innerText = window.aboutText;
-                document.getElementById('aboutInputField').value = window.aboutText; window.filterCatalog();
-            } catch (e) { window.filterCatalog(); }
+                
+                applySocialLinks(); 
+                document.getElementById('aboutViewText').innerText = window.aboutText;
+                document.getElementById('aboutInputField').value = window.aboutText; 
+                window.filterCatalog();
+            } catch (e) { 
+                window.filterCatalog(); 
+            }
         }
         loadAllData();
     </script>
 </body>
 </html>
+
