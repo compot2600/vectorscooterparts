@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vector Scooter Parts</title>
     
-    <!-- Logo na karcie przeglądarki (Favicon) z wymuszeniem odświeżenia cache -->
-    <link rel="icon" type="image/png" href="logo.png?v=1">
+    <!-- Logo na karcie przeglądarki (Favicon) -->
+    <link rel="icon" type="image/png" href="logo.png?v=3">
 
-    <!-- Ładowanie Firebase jako standardowe globalne skrypty (Brak błędów CORS na GitHub Pages) -->
+    <!-- Stabilne skrypty Firebase v8 (Eliminuje błędy CORS i "firebase is not defined") -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 
@@ -66,7 +66,7 @@
             z-index: 100;
         }
 
-        /* Nazwa marki cienką czcionką */
+        /* Nazwa marki wyrafinowaną, cienką czcionką */
         .logo {
             font-size: 24px;
             font-weight: 200;
@@ -304,7 +304,6 @@
             white-space: pre-wrap;
         }
 
-        /* Specjalne, kolorowe przyciski dla okna wyboru zakupu */
         .btn-allegro { background: #ff5a00; color: #ffffff; border: 1px solid #ff5a00; font-weight: 700; }
         .btn-vinted { background: #09b1ba; color: #ffffff; border: 1px solid #09b1ba; font-weight: 700; }
         .btn-whatsapp { background: #25d366; color: #ffffff; border: 1px solid #25d366; font-weight: 700; }
@@ -431,7 +430,6 @@
             <div id="aboutViewText" class="about-container">Ładowanie opisu marki...</div>
         </div>
     </div>
-
     <!-- MODAL: LOGIN -->
     <div id="loginModal" class="modal">
         <div class="modal-content" style="width: 350px;">
@@ -452,7 +450,7 @@
             <h3 style="margin-bottom: 8px;">Wybierz opcję zakupu</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="buyModalProductName">Nazwa produktu</p>
             <div class="purchase-options-list" id="purchaseButtonsContainer">
-                <!-- Przyciski Allegro, Vinted, WhatsApp generowane dynamicznie -->
+                <!-- Przyciski Allegro, Vinted, WhatsApp generowane dynamicznie w skrypcie -->
             </div>
         </div>
     </div>
@@ -496,174 +494,6 @@
             <div class="form-group"><label>Krótki opis</label><textarea id="prodDesc" rows="2" placeholder="Opis..."></textarea></div>
             <div class="form-group"><label>Specyfikacja</label><input type="text" id="prodSpecs" placeholder="np. HIC / SCS, 670mm"></div>
             
-            <!-- Trzy osobne linki zakupu dla integracji z platformami -->
-            <div class="form-group"><label>Link Allegro (Opcjonalnie)</label><input type="text" id="prodLinkAllegro" placeholder="https://allegro.pl... "></div>
-            <div class="form-group"><label>Link Vinted (Opcjonalnie)</label><input type="text" id="prodLinkVinted" placeholder="https://vinted.pl... "></div>
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 30px;
-            border-radius: 20px;
-            width: 440px;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        footer {
-            text-align: center;
-            padding: 25px;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border);
-            margin-top: auto;
-        }
-
-        .footer-admin-link {
-            font-size: 11px;
-            color: var(--text-muted);
-            cursor: pointer;
-            user-select: none;
-            text-decoration: none;
-        }
-
-        .footer-admin-link:hover {
-            color: var(--accent);
-        }
-
-        @media (max-width: 992px) {
-            .search-filter-panel { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <div class="logo">Vector Scooter Parts</div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <button id="themeToggleBtn" class="btn btn-secondary" style="padding: 8px 14px; font-size: 14px; font-weight: bold;" onclick="toggleTheme()">☼</button>
-            <a href="#" id="topLinkTikTok" target="_blank" class="social-link">TikTok</a>
-            <a href="#" id="topLinkInstagram" target="_blank" class="social-link">Instagram</a>
-            <a href="https://wa.me" target="_blank" class="btn support-btn" style="padding: 8px 14px; font-size: 13px;">WhatsApp</a>
-            <button id="adminPanelBtn" class="btn btn-primary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAddModal()">+ Dodaj produkt</button>
-            <button id="adminAboutBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="openAboutModal()">Edytuj O nas</button>
-            <button id="adminSocialBtn" class="btn btn-secondary" style="display: none; padding: 8px 14px; font-size: 13px;" onclick="toggleModal('socialModal', true)">Ustawienia Social Media</button>
-            <button id="adminLogoutBtn" class="btn btn-secondary" style="display: none; background: #2a1515; border-color: #4a2222; color: #ff9999; padding: 8px 14px; font-size: 13px;" onclick="logoutAdmin()">Wyloguj</button>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="tabs-nav">
-            <button id="btnTabCatalog" class="tab-btn active" onclick="switchTab('catalog')">Katalog części</button>
-            <button id="btnTabAbout" class="tab-btn" onclick="switchTab('about')">O nas</button>
-        </div>
-
-        <div id="tabCatalogContent" class="tab-content active">
-            <div class="search-filter-panel">
-                <input type="text" id="searchBar" placeholder="Szukaj części..." oninput="filterCatalog()">
-                <select id="filterType" onchange="filterCatalog()">
-                    <option value="all">Typ: Wszystkie</option>
-                    <option value="Kierownica">Kierownice</option><option value="Deck">Decki</option><option value="Koła">Koła</option><option value="Widelec">Widelce</option><option value="Zacisk">Zaciski</option><option value="Inne">Inne</option>
-                </select>
-                <select id="filterColor" onchange="filterCatalog()">
-                    <option value="all">Kolor: Wszystkie</option>
-                    <option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option>
-                </select>
-                <select id="sortPrice" onchange="filterCatalog()">
-                    <option value="default">Cena: Domyślnie</option>
-                    <option value="low">Od najtańszych</option><option value="high">Od najdroższych</option>
-                </select>
-            </div>
-            <div id="catalog" class="catalog"></div>
-        </div>
-
-        <div id="tabAboutContent" class="tab-content">
-            <div id="aboutViewText" class="about-container">Ładowanie opisu marki...</div>
-        </div>
-    </div>
-
-    <div id="loginModal" class="modal">
-        <div class="modal-content" style="width: 350px;">
-            <button class="close-btn" onclick="toggleModal('loginModal', false)">&times;</button>
-            <h3 style="margin-bottom: 15px;">Panel Logowania</h3>
-            <div class="form-group">
-                <label>Kod administratora</label>
-                <input type="password" id="authCodeField" placeholder="Wpisz kod dostępu...">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="submitAuth()">Zaloguj się</button>
-        </div>
-    </div>
-
-    <div id="buyModal" class="modal">
-        <div class="modal-content" style="width: 380px;">
-            <button class="close-btn" onclick="toggleModal('buyModal', false)">&times;</button>
-            <h3 style="margin-bottom: 8px;">Wybierz opcję zakupu</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="buyModalProductName">Nazwa produktu</p>
-            <div class="purchase-options-list" id="purchaseButtonsContainer"></div>
-        </div>
-    </div>
-    <div id="aboutModal" class="modal">
-        <div class="modal-content" style="width: 500px;">
-            <button class="close-btn" onclick="toggleModal('aboutModal', false)">&times;</button>
-            <h3 style="margin-bottom: 15px;">Edytuj sekcję O nas</h3>
-            <div class="form-group">
-                <label>Treść strony (obsługuje akapity)</label>
-                <textarea id="aboutInputField" rows="10" placeholder="Wpisz historię i opis swojej marki..."></textarea>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveAboutText()">Zapisz tekst</button>
-        </div>
-    </div>
-
-    <div id="socialModal" class="modal">
-        <div class="modal-content" style="width: 400px;">
-            <button class="close-btn" onclick="toggleModal('socialModal', false)">&times;</button>
-            <h3 style="margin-bottom: 15px;">Ustawienia Social Media</h3>
-            <div class="form-group"><label>TikTok URL</label><input type="text" id="settingTikTok" placeholder="https://tiktok.com@..."></div>
-            <div class="form-group"><label>Instagram URL</label><input type="text" id="settingInstagram" placeholder="https://instagram.com..."></div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="saveSocialLinks()">Zapisz linki</button>
-        </div>
-    </div>
-
-    <div id="adminModal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="toggleModal('adminModal', false)">&times;</button>
-            <h3 id="modalFormTitle" style="margin-bottom: 15px;">Dodaj produkt</h3>
-            <input type="hidden" id="editProductId">
-            <div class="form-group"><label>Nazwa części</label><input type="text" id="prodTitle" placeholder="np. Kierownica Trianon"></div>
-            <div class="form-group"><label>Cena (PLN)</label><input type="number" id="prodPrice" placeholder="np. 350"></div>
-            <div class="form-group"><label>Waga (w gramach)</label><input type="number" id="prodWeight" placeholder="np. 1100"></div>
-            <div class="form-group"><label>Typ</label><select id="prodType"><option value="Kierownica">Kierownica</option><option value="Deck">Deck</option><option value="Koła">Koła</option><option value="Widelec">Widelec</option><option value="Zacisk">Zacisk</option><option value="Inne">Inne</option></select></div>
-            <div class="form-group"><label>Kolor</label><select id="prodColor"><option value="Czarny">Czarny</option><option value="Chrom">Chrom</option><option value="Oil slick">Oil slick</option><option value="Czerwony">Czerwony</option><option value="Niebieski">Niebieski</option></select></div>
-            <div class="form-group"><label>Zdjęcie produktu (Plik)</label><input type="file" id="prodFile" accept="image/*"></div>
-            <div class="form-group"><label>Krótki opis</label><textarea id="prodDesc" rows="2" placeholder="Opis..."></textarea></div>
-            <div class="form-group"><label>Specyfikacja</label><input type="text" id="prodSpecs" placeholder="np. HIC / SCS, 670mm"></div>
-            
             <div class="form-group"><label>Link Allegro (Opcjonalnie)</label><input type="text" id="prodLinkAllegro" placeholder="https://allegro.pl..."></div>
             <div class="form-group"><label>Link Vinted (Opcjonalnie)</label><input type="text" id="prodLinkVinted" placeholder="https://vinted.pl..."></div>
             <div class="form-group"><label>Link WhatsApp (Opcjonalnie)</label><input type="text" id="prodLinkWhatsApp" placeholder="https://wa.me..."></div>
@@ -687,7 +517,7 @@
             measurementId: "G-8BT3ZK0FEJ"
         };
 
-        // Bezpieczna inicjalizacja przez skrypty globalne (całkowicie eliminuje błędy CORS)
+        // Inicjalizacja Firebase przez skrypty globalne v8 (całkowicie wyklucza błędy CORS i "firebase is not defined")
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -898,7 +728,7 @@
             }
         };
 
-        // DYNAMICZNE GENEROWANIE I OTWIERANIE MODALA KUP
+        // DYNAMICZNE GENEROWANIE I OTWIERANIE MODALA KUP (KOLOROWE PRZYCISKI)
         window.openBuyModal = function(id) {
             const p = window.products.find(x => x.id === id);
             if (!p) return;
