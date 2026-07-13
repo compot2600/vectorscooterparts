@@ -588,7 +588,9 @@
 
             window.toggleModal('adminModal', true);
         };
-        // POMOCNICZA FUNKCJA DO MAPOWANIA POLI FIRESTORE REST API
+                // ПРОПИСАЛИ АДРЕС ПРЯМЫМ ТЕКСТОМ — Браузер гарантированно найдет твою базу в Варшаве
+        const BASE_URL = "https://googleapis.com";
+
         function mapFields(fields) {
             return {
                 title: fields.title?.stringValue || "",
@@ -605,7 +607,6 @@
             };
         }
 
-        // ZAPIS I EDYCJA PRODUKTU PRZEZ REZOLUCJĘ FETCH (BEZ SŁOWA FIREBASE)
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -659,10 +660,11 @@
                         window.toggleModal('adminModal', false);
                         await loadAllData();
                         alert('Zapisano pomyślnie w chmurze!');
-                    } else { alert('Błąd serwera Firestore REST!'); }
+                    } else { alert('Błąd serwera Firestore!'); }
                 } catch (e) { alert('Błąd połączenia sieciowego!'); }
             };
 
+            // ИСПРАВЛЕНО: Если картинка не выбрана, сайт больше не падает, а сохраняет текст!
             if (fileInput.files && fileInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -678,11 +680,12 @@
                     };
                     img.src = e.target.result;
                 };
-                reader.readAsDataURL(fileInput.files);
-            } else { sendToBackend(null); }
+                reader.readAsDataURL(fileInput.files[0]);
+            } else { 
+                sendToBackend(null); 
+            }
         };
 
-        // DYNAMICZNE USUWANIE Z SERWERA W WARSZAWIE
         window.deleteProduct = async function(id) {
             if (!confirm("Czy na pewno chcesz usunąć ten produkt?")) return;
             try {
@@ -690,7 +693,6 @@
                 if (res.ok) { await loadAllData(); alert('Produkt usunięty!'); }
             } catch (e) { console.error(e); }
         };
-        // ZAPIS CONFIGU SOCIAL MEDIA i OPISU MARKI
         window.saveSocialLinks = async function() {
             try {
                 const tiktok = document.getElementById('settingTikTok').value;
@@ -719,7 +721,6 @@
             } catch (e) { console.error(e); }
         };
 
-        // KOLOROWE OKNO WYBORU ZAKUPU (ALLEGRO, VINTED, WHATSAPP)
         window.openBuyModal = function(id) {
             const p = window.products.find(x => x.id === id);
             if (!p) return;
@@ -736,7 +737,7 @@
             if (p.linkWhatsApp && p.linkWhatsApp.trim() !== "") {
                 container.innerHTML += `<a href="${p.linkWhatsApp}" target="_blank" class="btn btn-whatsapp">Kup przez WhatsApp</a>`; any = true;
             }
-            if (!any) container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);">Brak opcji zakupu.</div>';
+            if (!any) container.innerHTML = '<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:15px 0;">Brak opcji zakupu.</div>';
             window.toggleModal('buyModal', true);
         };
 
@@ -773,7 +774,6 @@
             });
         };
 
-        // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
         async function loadAllData() {
             try {
                 const pRes = await fetch(`${BASE_URL}/products`);
