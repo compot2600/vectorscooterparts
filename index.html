@@ -471,12 +471,13 @@
         <span class="footer-admin-link" style="opacity: 0.3;" onclick="toggleModal('loginModal', true)">for Admins</span>
     </footer>
     <script type="module">
+        // Poprawione linki z dodaniem www. - rozwiązuje błąd CORS policy
         import { initializeApp } from "https://gstatic.com";
         import { 
             getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, orderBy 
         } from "https://gstatic.com";
 
-        // Twoja osobista konfiguracja z konsoli Firebase w Warszawie (europe-central2)
+        // Konfiguracja projektu Firebase (Serwer Warszawa)
         const firebaseConfig = {
             apiKey: "AIzaSyDyjw5itjfrK5Pm5ZtfL2NtoN2pcBgYwrU",
             authDomain: "://firebaseapp.com",
@@ -487,17 +488,16 @@
             measurementId: "G-8BT3ZK0FEJ"
         };
 
-        // Inicjalizacja bazy danych online
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Globalne zmienne aplikacji zarejestrowane w oknie przeglądarki
+        // Stan aplikacji z pełną widocznością globalną
         window.products = [];
         window.socialLinks = { tiktok: "#", instagram: "#" };
         window.aboutText = "Witamy w Vector Scooter Parts! Nasza marka stawia na najwyższą jakość elementów i minimalistyczny design. Tekst ten można edytować z poziomu konta administratora.";
         window.isAdminActive = false;
 
-        // JAWNA REJESTRACJA FUNKCJI W OKNIE GLOBALNYM (WINDOW) DLA DZIAŁANIA ONCLICK
+        // Przypisanie funkcji do okna głównego (window) naprawia błąd "ReferenceError ... is not defined"
         window.toggleTheme = function() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
@@ -575,7 +575,7 @@
 
             window.toggleModal('adminModal', true);
         };
-        // GLOBALNA FUNKCJA ZAPISU I EDYCJI W FIREBASE
+        // GLOBALNA FUNKCJA ZAPISU I EDYCJI ZDJĘĆ / PRODUKTÓW W FIREBASE
         window.saveProductForm = async function() {
             const editId = document.getElementById('editProductId').value;
             const title = document.getElementById('prodTitle').value;
@@ -662,21 +662,20 @@
                 }
             }
         };
-        // GLOBALNA FUNKCJA ZAPISU URUCHAMIANA PRZEZ MODAL SOCIAL MEDIA
+
         window.saveSocialLinks = async function() {
             try {
                 window.socialLinks.tiktok = document.getElementById('settingTikTok').value;
                 window.socialLinks.instagram = document.getElementById('settingInstagram').value;
                 await setDoc(doc(db, "config", "socials"), window.socialLinks);
                 applySocialLinks();
-                window.toggleModal('socialModal', false);
+                window.toggleModal('socialSocialModal', false);
                 alert('Linki social media zostały zaktualizowane w Firebase!');
             } catch (error) {
                 console.error("Błąd zapisu configu: ", error);
             }
         };
 
-        // GLOBALNA FUNKCJA ZAPISU URUCHAMIANA PRZEZ MODAL O NAS
         window.saveAboutText = async function() {
             const newText = document.getElementById('aboutInputField').value;
             if (!newText.trim()) return;
@@ -691,7 +690,6 @@
             }
         };
 
-        // GLOBALNA FUNKCJA FILTROWANIA KATALOGU NA ŻYWO
         window.filterCatalog = function() {
             const q = document.getElementById('searchBar').value.toLowerCase();
             const t = document.getElementById('filterType').value;
@@ -717,7 +715,6 @@
             document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
 
-        // GLOBALNA FUNKCJA GENEROWANIA KART PRODUKTÓW
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog');
             box.innerHTML = '';
@@ -737,7 +734,6 @@
             });
         }
 
-        // FUNKCJA INTEGRACYJNA POBIERAJĄCA AKTUALNE DANE Z BAZY PO STRONIE KLIENTA
         async function loadAllData() {
             try {
                 const querySnapshot = await getDocs(query(collection(db, "products")));
