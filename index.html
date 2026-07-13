@@ -680,7 +680,7 @@
             try {
                 const tiktok = document.getElementById('settingTikTok').value;
                 const instagram = document.getElementById('settingInstagram').value;
-                await fetch("https://googleapis.com", {
+                await fetch(`${BASE_URL}/config/socials`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { tiktok: { stringValue: tiktok }, instagram: { stringValue: instagram } } })
@@ -694,7 +694,7 @@
             const txt = document.getElementById('aboutInputField').value;
             if (!txt.trim()) return;
             try {
-                await fetch("https://googleapis.com", {
+                await fetch(`${BASE_URL}/config/about`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fields: { text: { stringValue: txt } } })
@@ -761,7 +761,7 @@
         // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
         async function loadAllData() {
             try {
-                const pRes = await fetch("https://googleapis.com");
+                const pRes = await fetch(`${BASE_URL}/products`);
                 if (pRes.ok) {
                     const pData = await pRes.json();
                     window.products = (pData.documents || []).map(d => {
@@ -769,12 +769,12 @@
                         return { id, ...mapFields(d.fields) };
                     });
                 }
-                const sRes = await fetch("https://googleapis.com");
+                const sRes = await fetch(`${BASE_URL}/config/socials`);
                 if (sRes.ok) {
                     const sData = await sRes.json();
                     window.socialLinks = { tiktok: sData.fields?.tiktok?.stringValue || "#", instagram: sData.fields?.instagram?.stringValue || "#" };
                 }
-                const aRes = await fetch("https://googleapis.com");
+                const aRes = await fetch(`${BASE_URL}/config/about`);
                 if (aRes.ok) {
                     const aData = await aRes.json();
                     window.aboutText = aData.fields?.text?.stringValue || window.aboutText;
