@@ -694,11 +694,16 @@
             } catch (e) { console.error(e); }
         };
 
+        // ВОЗВРАЩАЕМ ПОТЕРЯННУЮ ФУНКЦИЮ: Открытие модалки редактирования текста O nas
+        window.openAboutModal = function() {
+            document.getElementById('aboutInputField').value = window.aboutText || "";
+            window.toggleModal('aboutModal', true);
+        };
+
         window.saveAboutText = async function() {
             const txt = document.getElementById('aboutInputField').value;
             if (!txt.trim()) return;
             try {
-                // ИСПРАВЛЕНО: Автоматическое создание документа "about" при первом сохранении
                 await fetch(`${BASE_URL}/config/about?updateMask.fieldPaths=text`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
@@ -709,8 +714,6 @@
             } catch (e) { console.error(e); }
         };
 
-
-        // KOLOROWE OKNO WYBORU ZAKUPU (ALLEGRO, VINTED, WHATSAPP)
         window.openBuyModal = function(id) {
             const p = window.products.find(x => x.id === id);
             if (!p) return;
@@ -749,7 +752,7 @@
             document.getElementById('settingTikTok').value = window.socialLinks.tiktok || "";
             document.getElementById('settingInstagram').value = window.socialLinks.instagram || "";
         }
-        // GENEROWANIE KART ELEMENTÓW NA STRONIE W DYSKRETNYM MINIMALIZMIE
+
         window.renderProducts = function(list) {
             const box = document.getElementById('catalog'); box.innerHTML = '';
             if (list.length === 0) {
@@ -758,13 +761,13 @@
             list.forEach((p, i) => {
                 const adm = window.isAdminActive ? `<div style="display:flex;gap:6px;margin-top:10px;"><button class="btn" style="flex:1;background:var(--border);color:var(--text-main);padding:6px;font-size:12px;border:none;" onclick="openEditModal('${p.id}')">Edytuj</button><button class="btn btn-danger" style="flex:1;padding:6px;font-size:12px;" onclick="deleteProduct('${p.id}')">Usuń</button></div>` : '';
                 box.innerHTML += `<div class="product-card" style="animation-delay:${i*0.03}s">
-                    <div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img}"></div>
+                    <div class="img-container"><div class="badges"><span class="badge badge-type">${p.type}</span><span class="badge badge-color">${p.color}</span></div><img src="${p.img || 'https://placehold.co'}"></div>
                     <div class="product-info"><h3 class="product-title" style="font-weight:600;">${p.title}</h3><p class="product-desc">${p.desc}</p><div class="product-specs">${p.specs}<br><strong>Waga:</strong> ${p.weight||0}g</div>
                     <div class="product-footer"><div class="product-price">${Number(p.price).toLocaleString('pl-PL')}</div><button class="btn btn-primary" style="padding:8px 20px; font-weight:600;" onclick="openBuyModal('${p.id}')">Kup</button></div>${adm}</div></div>`;
             });
         };
 
-        // BEZPOŚREDNIE POBIERANIE DANYCH Z BACKENDU W WARSZAWIE
+        // ИСПРАВЛЕНО: Теперь каждый запрос изолирован. Ошибка 404 больше не ломает загрузку товаров!
         async function loadAllData() {
             try {
                 const pRes = await fetch(`${BASE_URL}/products`);
@@ -775,21 +778,31 @@
                         return { id, ...mapFields(d.fields) };
                     });
                 }
+            } catch (e) { console.error("Błąd produktów:", e); }
+
+            try {
                 const sRes = await fetch(`${BASE_URL}/config/socials`);
                 if (sRes.ok) {
                     const sData = await sRes.json();
                     window.socialLinks = { tiktok: sData.fields?.tiktok?.stringValue || "#", instagram: sData.fields?.instagram?.stringValue || "#" };
                 }
+            } catch (e) { console.error("Błąd socials:", e); }
+
+            try {
                 const aRes = await fetch(`${BASE_URL}/config/about`);
                 if (aRes.ok) {
                     const aData = await aRes.json();
                     window.aboutText = aData.fields?.text?.stringValue || window.aboutText;
                 }
-                applySocialLinks(); document.getElementById('aboutViewText').innerText = window.aboutText;
-                document.getElementById('aboutInputField').value = window.aboutText; window.filterCatalog();
-            } catch (e) { window.filterCatalog(); }
+            } catch (e) { console.error("Błąd about:", e); }
+
+            applySocialLinks(); 
+            document.getElementById('aboutViewText').innerText = window.aboutText;
+            document.getElementById('aboutInputField').value = window.aboutText; 
+            window.filterCatalog();
         }
         loadAllData();
     </script>
 </body>
 </html>
+
